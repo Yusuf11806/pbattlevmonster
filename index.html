@@ -127,6 +127,8 @@
 
         .btn-campfire { background: #ff8800 !important; color: #000 !important; }
         .btn-campfire:hover { background: #ffa500 !important; }
+        .btn-workshop { background: #ffb347 !important; color: #000 !important; }
+        .btn-workshop:hover { background: #ffd080 !important; }
 
         
         .pixel-stage {
@@ -477,6 +479,7 @@
         </div>
         <div class="header-actions">
             <button id="btn-campfire" class="btn-campfire"><svg class="pixel-fire-icon" viewBox="0 0 16 16" aria-hidden="true"><path fill="#ffe45c" d="M7 0h2v3h2v3h2v4h-2v3H5v-2H3V8h2V5h2z"/><path fill="#f04432" d="M7 3h2v3h2v4H9v3H6v-2H4V8h2V6h1z"/><path fill="#fff1a6" d="M7 8h2v3H7z"/></svg> REST AT CAMPFIRE</button>
+            <button id="btn-workshop" class="btn-workshop" style="display:none;">WORKSHOP</button>
             <button id="btn-bgm" class="btn-bgm">PLAY BGM</button>
             <button id="btn-quit" class="btn-quit">MENU</button>
         </div>
@@ -717,6 +720,21 @@
             armorInventory: player.armorInventory,
             equipment: player.equipment,
             craftingMaterials: player.craftingMaterials,
+            enemyReadyToStart,
+            enemy: {
+                name: enemy.getName(),
+                level: enemy.getLevel(),
+                hp: enemy.getHp(),
+                maxHp: enemy.getMaxHp(),
+                baseAtk: enemy._baseAtk,
+                expReward: enemy.expReward,
+                weakness: enemy.weakness,
+                resist: enemy.resist,
+                forcedWeakElement: enemy.forcedWeakElement,
+                forcedWeakTurns: enemy.forcedWeakTurns,
+                isBoss: enemy.isBoss,
+                modifiers: enemy.modifiers
+            },
             innerselftypes: player.innerselftypes.map(p => ({
                 name: p.name,
                 skills: p.skills,
@@ -781,8 +799,29 @@
             ]));
             player.activePersonaIndex = Math.min(data.activePersonaIndex ?? 0, loadedInnerSelves.length - 1);
 
-            enemy = ShadowFactory.spawn(player.getLevel(), roundNumber > 10 && Math.random() < 0.2);
-            enemyReadyToStart = true;
+            const savedEnemy = data.enemy;
+            if (savedEnemy && typeof savedEnemy.name === 'string' && Number.isFinite(savedEnemy.level) && Number.isFinite(savedEnemy.maxHp)) {
+                enemy = new Shadow(
+                    savedEnemy.name,
+                    Math.max(1, Math.floor(savedEnemy.level)),
+                    Math.max(1, Math.floor(savedEnemy.maxHp)),
+                    Number(savedEnemy.baseAtk) || 10,
+                    Math.max(0, Number(savedEnemy.expReward) || 0),
+                    savedEnemy.weakness || 'None',
+                    savedEnemy.resist || 'None'
+                );
+                enemy.setHp(Number.isFinite(savedEnemy.hp) ? savedEnemy.hp : enemy.getMaxHp());
+                enemy.isBoss = Boolean(savedEnemy.isBoss);
+                enemy.forcedWeakElement = savedEnemy.forcedWeakElement || null;
+                enemy.forcedWeakTurns = Math.max(0, Math.floor(Number(savedEnemy.forcedWeakTurns) || 0));
+                if (savedEnemy.modifiers && typeof savedEnemy.modifiers === 'object') {
+                    enemy.modifiers = { ...enemy.modifiers, ...savedEnemy.modifiers };
+                }
+                enemyReadyToStart = data.enemyReadyToStart !== false;
+            } else {
+                enemy = ShadowFactory.spawn(player.getLevel(), roundNumber > 10 && Math.random() < 0.2);
+                enemyReadyToStart = true;
+            }
             logBox.innerHTML = '';
             btnNext.style.display = 'none';
             btnReset.style.display = 'none';
@@ -803,13 +842,24 @@
         }
         player.setHp(player.getMaxHp());
         player.setSp(player.getMaxSp());
+        if (!enemy.isAlive() && !enemyReadyToStart) {
+            roundNumber++;
+            const isBossSpawn = roundNumber > 10 && Math.random() < 0.2;
+            enemy = ShadowFactory.spawn(player.getLevel(), isBossSpawn);
+            enemyReadyToStart = true;
+            btnNext.innerText = 'CONTINUE TO NEXT ENCOUNTER *';
+        }
         saveGameData();
         pixelRunner.classList.remove('pixel-traversing');
         pixelRunner.style.left = 'calc(50% - 32px)';
         document.querySelector('.pixel-stage').classList.add('resting');
-        document.getElementById('campfire-workshop').hidden = false;
-        renderArmorWorkshop();
+        document.getElementById('btn-workshop').style.display = 'block';
         updateUI();
+    });
+    document.getElementById('btn-workshop').addEventListener('click', () => {
+        if (btnNext.style.display !== 'block' || !pixelStage.classList.contains('resting')) return;
+        renderArmorWorkshop();
+        document.getElementById('campfire-workshop').hidden = false;
     });
     const pixelRunner = document.getElementById('pixel-runner');
     const pixelEnemy = document.getElementById('pixel-enemy');
@@ -854,6 +904,7 @@
     function initEncounterAnimation(isBoss = false) {
         disableButtons();
         document.getElementById('btn-run').style.display = 'none';
+        document.getElementById('btn-workshop').style.display = 'none';
         
         const activeRunner = pixelRunner;
         document.querySelector('.pixel-stage').classList.remove('resting');
@@ -1744,13 +1795,12 @@
         btnNext.innerText = 'CONTINUE TO NEXT ENCOUNTER *';
         btnNext.style.display = 'block';
         btnRun.style.display = 'none';
+        document.getElementById('btn-workshop').style.display = 'block';
         pixelRunner.classList.remove('pixel-traversing');
         pixelRunner.style.left = 'calc(50% - 32px)';
         pixelStage.classList.add('resting');
         addLog('* You escaped the encounter and returned to the campfire. HP and SP restored.', 'system');
         saveGameData();
-        renderArmorWorkshop();
-        workshopBackdrop.hidden = false;
         updateUI();
     });
 
