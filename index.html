@@ -64,6 +64,21 @@
             font-size: 14px;
         }
         .name-input:focus { outline: 2px solid #ffff00; outline-offset: 2px; }
+        .difficulty-select {
+            width: 100%;
+            padding: 10px 12px;
+            background: #111111;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            font-size: 14px;
+        }
+        .difficulty-select:focus { outline: 2px solid #ffff00; outline-offset: 2px; }
+        .difficulty-label {
+            color: #ffff00;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
 
         
         .game-container {
@@ -158,6 +173,9 @@
         .pixel-runner.pixel-traversing {
             animation: pixel-walk .42s steps(2, end) infinite, pixel-traverse 2s steps(20, end) 1 normal forwards;
         }
+        .pixel-runner.is-attacking { animation: pixel-attack .38s steps(6, end); }
+        .pixel-enemy-stage.is-attacking { animation: pixel-attack .38s steps(6, end); }
+        .pixel-enemy-stage.is-hit, .pixel-runner.is-hit { animation: pixel-hit .3s steps(3, end); }
 
         .pixel-enemy-stage {
             position: absolute;
@@ -369,11 +387,63 @@
             z-index: 5;
             image-rendering: pixelated;
         }
+        .skill-projectile.is-flying {
+            display: block;
+            animation: skill-flight 420ms steps(8, end) forwards;
+        }
+        @keyframes pixel-attack {
+            0%, 100% { transform: translate(0, 0); }
+            45%, 60% { transform: translate(var(--attack-distance), -4px); }
+        }
+        @keyframes pixel-hit {
+            0%, 100% { filter: brightness(1); }
+            45%, 60% { filter: brightness(3) saturate(.2); }
+        }
+        @keyframes skill-flight {
+            0% { left: var(--skill-start-x); top: var(--skill-start-y); transform: scale(.6); }
+            50% { left: var(--skill-mid-x); top: var(--skill-mid-y); transform: scale(1.2); }
+            100% { left: var(--skill-end-x); top: var(--skill-end-y); transform: scale(.8); }
+        }
 
         .btn-next, .btn-reset { grid-column: span 3; background: #000000; color: #00ff00; border: 2px solid #00ff00; padding: 10px; }
         .btn-next:hover, .btn-reset:hover { background: #00ff00; color: #000000; }
+        .btn-run { grid-column: span 3; color: #ffb347; border-color: #ff8800; }
+        .btn-run:hover:not(:disabled) { background: #ff8800; color: #000000; }
         .btn-reset { color: #ff0055; border-color: #ff0055; }
         .btn-reset:hover { background: #ff0055; color: #000000; }
+        .workshop-backdrop[hidden] { display: none; }
+        .workshop-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            display: grid;
+            place-items: center;
+            padding: 16px;
+            background: rgba(0, 0, 0, .86);
+        }
+        .workshop-panel {
+            width: min(620px, 100%);
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 18px;
+            background: #080b08;
+            border: 3px solid #ff8800;
+            box-shadow: 0 0 22px rgba(255, 136, 0, .3);
+        }
+        .workshop-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .workshop-header h2 { color: #ffb347; font-size: 18px; }
+        .workshop-materials { color: #b8ddb8; font-size: 12px; margin-bottom: 14px; }
+        .armor-row { border: 1px solid #58705a; padding: 10px; margin-top: 9px; }
+        .armor-row h3 { color: #00ffff; font-size: 13px; margin-bottom: 6px; }
+        .armor-equipped { color: #ffffff; font-size: 11px; margin-bottom: 7px; }
+        .armor-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+        .armor-actions select { grid-column: 1 / -1; width: 100%; min-width: 0; }
+        .armor-actions .btn { min-width: 0; padding: 7px; font-size: 10px; white-space: normal; overflow-wrap: anywhere; }
+        .workshop-note { color: #aaaaaa; font-size: 10px; margin-top: 12px; line-height: 1.4; }
+        @media (max-width: 520px) {
+            .armor-actions { grid-template-columns: 1fr 1fr; }
+            .armor-actions select { grid-column: span 2; }
+        }
 
     </style>
 </head>
@@ -386,6 +456,12 @@
     <h1>PBattle V Monster</h1>
     <div class="menu-controls">
         <input id="player-name-input" class="name-input" type="text" maxlength="24" placeholder="Enter your name" aria-label="Your name" autocomplete="nickname">
+        <label class="difficulty-label" for="difficulty-select">CHOOSE DIFFICULTY</label>
+        <select id="difficulty-select" class="difficulty-select" aria-label="Choose difficulty">
+            <option value="easy">EASY</option>
+            <option value="normal">NORMAL</option>
+            <option value="hard">HARD</option>
+        </select>
         <button id="btn-start-game" class="btn">START GAME</button>
         <button id="btn-load-game" class="btn btn-secondary" style="display:none;">LOAD GAME</button>
         <button id="btn-menu-sound" class="btn btn-secondary">SOUND: OFF</button>
@@ -515,9 +591,22 @@
         <button id="btn-item" class="btn btn-item">ITEM</button>
         <button id="btn-guard" class="btn btn-guard">GUARD</button>
 
+        <button id="btn-run" class="btn btn-run">RUN TO CAMPFIRE</button>
         <button id="btn-next" class="btn btn-next" style="display:none;">NEXT ENCOUNTER *</button>
         <button id="btn-reset" class="btn btn-reset" style="display:none;">RESTART GAME *</button>
     </div>
+</div>
+
+<div id="campfire-workshop" class="workshop-backdrop" hidden>
+    <section class="workshop-panel" role="dialog" aria-modal="true" aria-labelledby="workshop-title">
+        <div class="workshop-header">
+            <h2 id="workshop-title">CAMPFIRE WORKSHOP</h2>
+            <button id="btn-close-workshop" class="btn btn-guard">CLOSE</button>
+        </div>
+        <p id="workshop-materials" class="workshop-materials"></p>
+        <div id="armor-slots"></div>
+        <p class="workshop-note">Crafting and upgrades use materials found after encounters. Armor cannot exceed your character level. Defense reduces incoming damage; attack bonuses increase your damage.</p>
+    </section>
 </div>
 
 <script>
@@ -526,6 +615,12 @@
     const bgm = document.getElementById('bgm');
     let playerName = localStorage.getItem('pbattle_player_name') || 'Guest';
     let roundNumber = 1;
+    let enemyReadyToStart = false;
+    const difficultyOptions = ['easy', 'normal', 'hard'];
+    let difficulty = localStorage.getItem('pbattle_difficulty') || 'normal';
+    if (!difficultyOptions.includes(difficulty)) difficulty = 'normal';
+    const difficultySelect = document.getElementById('difficulty-select');
+    difficultySelect.value = difficulty;
     document.getElementById('player-name-input').value = playerName === 'Guest' ? '' : playerName;
     let bgmPlaying = false;
     const menuSoundButton = document.getElementById('btn-menu-sound');
@@ -572,6 +667,8 @@
     document.getElementById('btn-start-game').addEventListener('click', () => {
         playerName = document.getElementById('player-name-input').value.trim() || 'Guest';
         localStorage.setItem('pbattle_player_name', playerName);
+        difficulty = difficultySelect.value;
+        localStorage.setItem('pbattle_difficulty', difficulty);
         player._name = playerName;
         mainMenu.style.display = 'none';
         gameUI.style.display = 'flex';
@@ -602,10 +699,11 @@
     document.getElementById('btn-exit').addEventListener('click', () => {
         mainMenu.innerHTML = '<h1 style="color:#ffff00;">GAME CLOSED.</h1><p>* Stay determined.</p>';
     });
-    function saveGameData() {
+    function saveGameData(writeLog = true) {
         const saveData = {
             name: player.getName(),
-            roundNumber: roundNumber + 1,
+            roundNumber,
+            difficulty,
             level: player.getLevel(),
             hp: player.getHp(),
             maxHp: player._maxHp,
@@ -616,6 +714,9 @@
             baseAtk: player._baseAtk,
             evadeChance: player.evadeChance,
             inventory: player.inventory,
+            armorInventory: player.armorInventory,
+            equipment: player.equipment,
+            craftingMaterials: player.craftingMaterials,
             innerselftypes: player.innerselftypes.map(p => ({
                 name: p.name,
                 skills: p.skills,
@@ -629,7 +730,7 @@
             activePersonaIndex: player.activePersonaIndex
         };
         localStorage.setItem('pbattle_save_data', JSON.stringify(saveData));
-        addLog("* Grace discovered. Game Saved at Campfire[cite: 2]!", "levelup");
+        if (writeLog) addLog("* Grace discovered. Game Saved at Campfire[cite: 2]!", "levelup");
         refreshLoadButton();
     }
 
@@ -655,6 +756,8 @@
 
             playerName = data.name || 'Guest';
             roundNumber = data.roundNumber ?? 1;
+            difficulty = difficultyOptions.includes(data.difficulty) ? data.difficulty : 'normal';
+            difficultySelect.value = difficulty;
             player = new Player(playerName, data.maxHp ?? 150, data.maxSp ?? 50, loadedInnerSelves);
             player._level = data.level ?? 1;
             player._hp = data.hp ?? player.getMaxHp();
@@ -664,9 +767,22 @@
             player._baseAtk = data.baseAtk ?? 12;
             player.evadeChance = data.evadeChance ?? 0.2;
             player.inventory = data.inventory || player.inventory;
+            player.armorInventory = Array.isArray(data.armorInventory)
+                ? data.armorInventory.filter(piece => piece && armorSlots[piece.slot] && Number.isFinite(piece.level) && piece.level >= 1 && piece.level <= player.getLevel())
+                : [];
+            player.equipment = Object.fromEntries(Object.keys(armorSlots).map(slot => {
+                const armorId = data.equipment?.[slot];
+                const equippedPiece = player.armorInventory.find(piece => piece.id === armorId && piece.slot === slot && piece.level <= player.getLevel());
+                return [slot, equippedPiece ? equippedPiece.id : null];
+            }));
+            player.craftingMaterials = Object.fromEntries(Object.keys(materialLabels).map(material => [
+                material,
+                Math.max(0, Math.floor(Number(data.craftingMaterials?.[material]) || 0))
+            ]));
             player.activePersonaIndex = Math.min(data.activePersonaIndex ?? 0, loadedInnerSelves.length - 1);
 
             enemy = ShadowFactory.spawn(player.getLevel(), roundNumber > 10 && Math.random() < 0.2);
+            enemyReadyToStart = true;
             logBox.innerHTML = '';
             btnNext.style.display = 'none';
             btnReset.style.display = 'none';
@@ -691,27 +807,26 @@
         pixelRunner.classList.remove('pixel-traversing');
         pixelRunner.style.left = 'calc(50% - 32px)';
         document.querySelector('.pixel-stage').classList.add('resting');
+        document.getElementById('campfire-workshop').hidden = false;
+        renderArmorWorkshop();
         updateUI();
     });
     const pixelRunner = document.getElementById('pixel-runner');
     const pixelEnemy = document.getElementById('pixel-enemy');
     const skillProjectile = document.getElementById('skill-projectile');
     const pixelStage = document.querySelector('.pixel-stage');
+    function playClassAnimation(element, className, duration) {
+        element.classList.remove(className);
+        void element.offsetWidth;
+        element.classList.add(className);
+        window.setTimeout(() => element.classList.remove(className), duration);
+    }
     function animateTargetHit(target) {
-        if (!target.animate) return;
-        target.animate([
-            { filter: 'brightness(1)' },
-            { filter: 'brightness(3) saturate(.2)' },
-            { filter: 'brightness(1)' }
-        ], { duration: 300, easing: 'steps(3, end)' });
+        playClassAnimation(target, 'is-hit', 320);
     }
     function animateAttack(attacker, target, distance) {
-        if (!attacker.animate || !target.animate) return;
-        attacker.animate([
-            { transform: 'translate(0, 0)' },
-            { transform: `translate(${distance}px, -4px)` },
-            { transform: 'translate(0, 0)' }
-        ], { duration: 380, easing: 'steps(6, end)' });
+        attacker.style.setProperty('--attack-distance', `${distance}px`);
+        playClassAnimation(attacker, 'is-attacking', 400);
         animateTargetHit(target);
     }
     function animateSkillAttack() {
@@ -722,18 +837,23 @@
         const startY = heroRect.top - stageRect.top + heroRect.height * .4;
         const endX = enemyRect.left - stageRect.left + enemyRect.width * .35;
         const endY = enemyRect.top - stageRect.top + enemyRect.height * .4;
-        skillProjectile.style.display = 'block';
-        skillProjectile.animate([
-            { left: `${startX}px`, top: `${startY}px`, transform: 'scale(.6)' },
-            { left: `${(startX + endX) / 2}px`, top: `${Math.min(startY, endY) - 12}px`, transform: 'scale(1.2)' },
-            { left: `${endX}px`, top: `${endY}px`, transform: 'scale(.8)' }
-        ], { duration: 420, easing: 'steps(8, end)' }).onfinish = () => {
-            skillProjectile.style.display = 'none';
+        skillProjectile.style.setProperty('--skill-start-x', `${startX}px`);
+        skillProjectile.style.setProperty('--skill-start-y', `${startY}px`);
+        skillProjectile.style.setProperty('--skill-mid-x', `${(startX + endX) / 2}px`);
+        skillProjectile.style.setProperty('--skill-mid-y', `${Math.min(startY, endY) - 12}px`);
+        skillProjectile.style.setProperty('--skill-end-x', `${endX}px`);
+        skillProjectile.style.setProperty('--skill-end-y', `${endY}px`);
+        skillProjectile.classList.remove('is-flying');
+        void skillProjectile.offsetWidth;
+        skillProjectile.classList.add('is-flying');
+        window.setTimeout(() => {
+            skillProjectile.classList.remove('is-flying');
             animateTargetHit(pixelEnemy);
-        };
+        }, 440);
     }
     function initEncounterAnimation(isBoss = false) {
         disableButtons();
+        document.getElementById('btn-run').style.display = 'none';
         
         const activeRunner = pixelRunner;
         document.querySelector('.pixel-stage').classList.remove('resting');
@@ -745,14 +865,17 @@
         activeRunner.classList.add('pixel-traversing');
 
         setTimeout(() => {
+            activeRunner.classList.remove('pixel-traversing');
+            activeRunner.style.left = 'calc(100% - 148px)';
             enableButtons();
+            document.getElementById('btn-run').style.display = 'block';
             if (isBoss) {
                 addLog(`* DANGER! A formidable enemy blocks the path!`, "enemy");
             } else {
                 addLog(`* A Lv. ${enemy.getLevel()} ${enemy.getName()} approaches!`, "system");
             }
             updateUI();
-        }, 1200);
+        }, 2000);
     }
     function calculateRandomDamage(baseAtk) {
         const variance = 0.85 + (Math.random() * 0.30);
@@ -768,6 +891,45 @@
         { id: 'rakunda', name: "Flimsy Charm", type: 'debuff_def', value: 1.5, turns: 3, desc: "Enemy DEF Down" },
         { id: 'tarunda', name: "Fragile Charm", type: 'debuff_atk', value: 0.5, turns: 3, desc: "Enemy ATK Down" }
     ];
+
+    const armorSlots = {
+        helmet: { label: 'HELMET', defense: 1, attack: 1 },
+        body: { label: 'BODY ARMOR', defense: 3, attack: 0 },
+        legs: { label: 'LEG ARMOR', defense: 2, attack: 0 },
+        shoes: { label: 'SHOES', defense: 1, attack: 1 }
+    };
+    const materialLabels = { metal: 'Scrap Metal', hide: 'Shadow Hide', shard: 'Soul Shard' };
+    const armorNameTiers = ['Worn', 'Iron', 'Steel', 'Shadowforged', 'Abyssal'];
+
+    function makeArmor(slot, level) {
+        const slotData = armorSlots[slot];
+        const tier = armorNameTiers[Math.min(Math.floor((level - 1) / 3), armorNameTiers.length - 1)];
+        const slotName = slot === 'body' ? 'Armor' : slot === 'legs' ? 'Greaves' : slotData.label.replace(' ', ' ').replace(/\b\w/g, letter => letter.toUpperCase());
+        return {
+            id: `armor_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            slot,
+            name: `${tier} ${slotName}`,
+            level
+        };
+    }
+
+    function getArmorStats(armor) {
+        const slotData = armorSlots[armor.slot];
+        if (!slotData) return { defense: 0, attack: 0 };
+        const level = Math.max(1, armor.level || 1);
+        return {
+            defense: slotData.defense + level - 1,
+            attack: slotData.attack + Math.floor((level - 1) / 3)
+        };
+    }
+
+    function getMaterialCost(level) {
+        return {
+            metal: 1 + Math.ceil(level / 2),
+            hide: Math.max(1, Math.floor(level / 3)),
+            shard: level >= 4 ? Math.floor(level / 4) : 0
+        };
+    }
 
     class GameCharacter {
         constructor(name, hp, sp, level = 1, baseAtk = 10) {
@@ -863,7 +1025,14 @@
                 }
                 const foundSkill = this.unlockableSkillPool.find(s => s.learnLevel === this.level && !this.skills.some(existing => existing.name === s.name));
                 if (foundSkill) {
-                    this.skills.push(foundSkill);
+                    const learnedSkill = { ...foundSkill };
+                    if (learnedSkill.effectType === 'damage') {
+                        const strongestCurrentDamage = this.skills
+                            .filter(skill => skill.effectType === 'damage')
+                            .reduce((highest, skill) => Math.max(highest, skill.power), 0);
+                        learnedSkill.power = Math.max(learnedSkill.power, strongestCurrentDamage + 15);
+                    }
+                    this.skills.push(learnedSkill);
                     newSkillLearned = foundSkill.name;
                 }
             }
@@ -887,6 +1056,20 @@
             this._maxExp = 50;
             this.inventory = { 'medicine': 3, 'snuff_soul': 1, 'tarukaja': 1, 'rakunda': 1 };
             this.evadeChance = 0.2;
+            this.armorInventory = [];
+            this.equipment = { helmet: null, body: null, legs: null, shoes: null };
+            this.craftingMaterials = { metal: 0, hide: 0, shard: 0 };
+        }
+
+        getArmorStats() {
+            return Object.values(this.equipment).reduce((total, armorId) => {
+                const armor = this.armorInventory.find(piece => piece.id === armorId);
+                if (!armor) return total;
+                const stats = getArmorStats(armor);
+                total.defense += stats.defense;
+                total.attack += stats.attack;
+                return total;
+            }, { defense: 0, attack: 0 });
         }
 
         getActiveInnerSelf() { return this.innerselftypes[this.activePersonaIndex]; }
@@ -954,7 +1137,7 @@
                         target.applyVulnerability(skill.element, skill.effectTurns);
                         text = `* ${inner.name} cast [${skill.name}]. Enemy made weak to [${skill.element}] for ${skill.effectTurns} rounds!`;
                     } else {
-                        let rawDmg = (this.getBaseAtk() + skill.power + inner.skillPowerBonus) * this.modifiers.atkMult;
+                        let rawDmg = (this.getBaseAtk() + skill.power + inner.skillPowerBonus + this.getArmorStats().attack) * this.modifiers.atkMult;
                         let multiplier = 1.0;
                         let isResist = false;
 
@@ -979,7 +1162,7 @@
                 }
             } 
             
-            let rawMeleeDmg = Math.floor(this.getBaseAtk() * 0.6) * this.modifiers.atkMult;
+            let rawMeleeDmg = (Math.floor(this.getBaseAtk() * 0.6) + this.getArmorStats().attack) * this.modifiers.atkMult;
             let meleeElementMult = 1.0;
             let meleeIsWeak = false;
             if (target.weakness === "None" || target.isForcedWeak("None")) {
@@ -1035,8 +1218,11 @@
             }
             let enemyRaw = this.getBaseAtk() * this.modifiers.atkMult;
             let finalEnemyMult = 1.0 * target.modifiers.defMult;
-            const finalDmg = target.takeDamage(calculateRandomDamage(enemyRaw * finalEnemyMult));
-            return { text: `* ${this.getName()} strikes back for ${finalDmg} damage!`, type: 'enemy' };
+            const rolledDamage = calculateRandomDamage(enemyRaw * finalEnemyMult);
+            const armorDefense = target.getArmorStats().defense;
+            const finalDmg = target.takeDamage(Math.max(1, rolledDamage - armorDefense));
+            const armorNote = armorDefense > 0 ? ` (armor blocked ${rolledDamage - finalDmg})` : '';
+            return { text: `* ${this.getName()} strikes back for ${finalDmg} damage${armorNote}!`, type: 'enemy' };
         }
     }
 
@@ -1064,9 +1250,14 @@
             const hpMult = isBoss ? 35 : 18;
             const atkMult = isBoss ? 5 : 3;
             
-            const scaledHp = proto.hpBase + (enemyLevel * hpMult);
-            const scaledAtk = proto.atkBase + (enemyLevel * atkMult);
-            const scaledExp = proto.expBase + (enemyLevel * (isBoss ? 20 : 12));
+            const difficultyScale = {
+                easy: { hp: 0.75, atk: 0.8, exp: 1.15 },
+                normal: { hp: 1, atk: 1, exp: 1 },
+                hard: { hp: 1.35, atk: 1.25, exp: 1.2 }
+            }[difficulty] || { hp: 1, atk: 1, exp: 1 };
+            const scaledHp = Math.round((proto.hpBase + (enemyLevel * hpMult)) * difficultyScale.hp);
+            const scaledAtk = Math.round((proto.atkBase + (enemyLevel * atkMult)) * difficultyScale.atk);
+            const scaledExp = Math.round((proto.expBase + (enemyLevel * (isBoss ? 20 : 12))) * difficultyScale.exp);
 
             let shadow = new Shadow(proto.name, enemyLevel, scaledHp, scaledAtk, scaledExp, proto.weak, proto.resist);
             shadow.isBoss = isBoss;
@@ -1110,6 +1301,18 @@
     const skillSelect = document.getElementById('skill-select');
     const btnNext = document.getElementById('btn-next');
     const btnReset = document.getElementById('btn-reset');
+    const btnRun = document.getElementById('btn-run');
+    const workshopBackdrop = document.getElementById('campfire-workshop');
+
+    document.getElementById('btn-close-workshop').addEventListener('click', () => {
+        workshopBackdrop.hidden = true;
+    });
+    workshopBackdrop.addEventListener('click', event => {
+        if (event.target === workshopBackdrop) workshopBackdrop.hidden = true;
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') workshopBackdrop.hidden = true;
+    });
 
     function getElementColorClass(element) {
         if (element === "Curse") return "highlight-curse";
@@ -1178,13 +1381,120 @@
         }
     }
 
+    function renderArmorWorkshop() {
+        const materialsText = document.getElementById('workshop-materials');
+        const slotsContainer = document.getElementById('armor-slots');
+        materialsText.textContent = `MATERIALS: ${Object.entries(materialLabels).map(([key, label]) => `${label} x${player.craftingMaterials[key] || 0}`).join('  |  ')}`;
+        slotsContainer.innerHTML = '';
+
+        const canAfford = cost => Object.entries(cost).every(([key, amount]) => (player.craftingMaterials[key] || 0) >= amount);
+        const payCost = cost => Object.entries(cost).forEach(([key, amount]) => { player.craftingMaterials[key] -= amount; });
+        const costLabel = cost => Object.entries(cost)
+            .filter(([, amount]) => amount > 0)
+            .map(([key, amount]) => `${amount} ${materialLabels[key]}`)
+            .join(', ');
+
+        Object.entries(armorSlots).forEach(([slot, slotData]) => {
+            const row = document.createElement('section');
+            row.className = 'armor-row';
+            const title = document.createElement('h3');
+            title.textContent = slotData.label;
+            row.appendChild(title);
+
+            const equipped = player.armorInventory.find(piece => piece.id === player.equipment[slot]);
+            const equippedText = document.createElement('p');
+            equippedText.className = 'armor-equipped';
+            if (equipped) {
+                const stats = getArmorStats(equipped);
+                equippedText.textContent = `Equipped: ${equipped.name} Lv. ${equipped.level} - DEF ${stats.defense} - ATK +${stats.attack}`;
+            } else {
+                equippedText.textContent = 'Equipped: none';
+            }
+            row.appendChild(equippedText);
+
+            const actions = document.createElement('div');
+            actions.className = 'armor-actions';
+            const select = document.createElement('select');
+            select.className = 'item-select';
+            select.setAttribute('aria-label', `Choose ${slotData.label.toLowerCase()}`);
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Choose owned armor';
+            select.appendChild(placeholder);
+            const ownedPieces = player.armorInventory.filter(piece => piece.slot === slot && piece.level <= player.getLevel());
+            ownedPieces.forEach(piece => {
+                const option = document.createElement('option');
+                option.value = piece.id;
+                const stats = getArmorStats(piece);
+                option.textContent = `${piece.name} Lv.${piece.level} (DEF ${stats.defense}, ATK +${stats.attack})`;
+                select.appendChild(option);
+            });
+            actions.appendChild(select);
+
+            const equipButton = document.createElement('button');
+            equipButton.className = 'btn btn-secondary';
+            equipButton.textContent = 'EQUIP';
+            equipButton.disabled = ownedPieces.length === 0;
+            equipButton.addEventListener('click', () => {
+                const piece = player.armorInventory.find(item => item.id === select.value && item.slot === slot && item.level <= player.getLevel());
+                if (!piece) return;
+                player.equipment[slot] = piece.id;
+                addLog(`* Equipped ${piece.name} Lv. ${piece.level}.`, 'system');
+                saveGameData(false);
+                updateUI();
+                renderArmorWorkshop();
+            });
+            actions.appendChild(equipButton);
+
+            const craftLevel = player.getLevel();
+            const craftCost = getMaterialCost(craftLevel);
+            const craftButton = document.createElement('button');
+            craftButton.className = 'btn btn-item';
+            craftButton.textContent = `CRAFT - ${costLabel(craftCost)}`;
+            craftButton.disabled = !canAfford(craftCost);
+            craftButton.addEventListener('click', () => {
+                if (!canAfford(craftCost)) return;
+                payCost(craftCost);
+                const piece = makeArmor(slot, craftLevel);
+                player.armorInventory.push(piece);
+                player.equipment[slot] = piece.id;
+                addLog(`* Crafted and equipped ${piece.name} Lv. ${piece.level}.`, 'levelup');
+                saveGameData(false);
+                updateUI();
+                renderArmorWorkshop();
+            });
+            actions.appendChild(craftButton);
+
+            const nextLevel = equipped ? equipped.level + 1 : player.getLevel() + 1;
+            const upgradeCost = getMaterialCost(nextLevel);
+            const upgradeButton = document.createElement('button');
+            upgradeButton.className = 'btn btn-switch';
+            upgradeButton.textContent = `UPGRADE - ${costLabel(upgradeCost)}`;
+            upgradeButton.disabled = !equipped || nextLevel > player.getLevel() || !canAfford(upgradeCost);
+            upgradeButton.addEventListener('click', () => {
+                if (!equipped || equipped.level >= player.getLevel() || !canAfford(upgradeCost)) return;
+                payCost(upgradeCost);
+                equipped.level = nextLevel;
+                equipped.name = makeArmor(slot, nextLevel).name;
+                addLog(`* Upgraded ${equipped.name} to Lv. ${equipped.level}.`, 'levelup');
+                saveGameData(false);
+                updateUI();
+                renderArmorWorkshop();
+            });
+            actions.appendChild(upgradeButton);
+            row.appendChild(actions);
+            slotsContainer.appendChild(row);
+        });
+    }
+
     function updateUI() {
         const inner = player.getActiveInnerSelf();
         const skill = inner.getActiveSkill();
+        const armorStats = player.getArmorStats();
 
         document.getElementById('player-name').innerText = player.getName();
         document.getElementById('player-level').innerText = `LV ${player.getLevel()}`;
-        document.getElementById('persona-info').innerHTML = `InnerSelf: <strong>${inner.name}</strong> (Lv. ${inner.level}) <br>Active Skill: <strong>${skill.name}</strong> (<span class="${getElementColorClass(skill.element)}">${skill.element}</span>) | -${inner.getSkillCost(skill)} SP<br>Skill Power Bonus: +${inner.skillPowerBonus}<br>Passive: Evasion (${Math.round(player.evadeChance * 100)}%)`;
+        document.getElementById('persona-info').innerHTML = `InnerSelf: <strong>${inner.name}</strong> (Lv. ${inner.level}) <br>Active Skill: <strong>${skill.name}</strong> (<span class="${getElementColorClass(skill.element)}">${skill.element}</span>) | -${inner.getSkillCost(skill)} SP<br>Skill Power Bonus: +${inner.skillPowerBonus}<br>Armor: DEF -${armorStats.defense} | ATK +${armorStats.attack}<br>Passive: Evasion (${Math.round(player.evadeChance * 100)}%)`;
         renderStatus(player, 'player-status');
         
         document.getElementById('player-hp-text').innerText = `${player.getHp()}/${player.getMaxHp()}`;
@@ -1232,12 +1542,14 @@
         btnGuard.disabled = true;
         itemSelect.disabled = true;
         skillSelect.disabled = true;
+        btnRun.disabled = true;
     }
 
     function enableButtons() {
         btnAttack.disabled = false;
         btnSwitch.disabled = false;
         btnGuard.disabled = false;
+        btnRun.disabled = false;
         skillSelect.disabled = false;
         const inner = player.getActiveInnerSelf();
         const skill = inner.getActiveSkill();
@@ -1262,7 +1574,9 @@
         }
         innerLevelResult.attributeGains.forEach(gain => addLog(`* RANDOM ATTRIBUTE: ${gain}!`, "levelup"));
         if (innerLevelResult.newSkillLearned) {
-            addLog(`* SKILL LEARNED! ${inner.name} unlocked new skill [${innerLevelResult.newSkillLearned}]!`, "levelup");
+            const learnedSkill = inner.skills.find(skill => skill.name === innerLevelResult.newSkillLearned);
+            const powerNote = learnedSkill?.effectType === 'damage' ? ` (${learnedSkill.power} power)` : '';
+            addLog(`* SKILL LEARNED! ${inner.name} unlocked new skill [${innerLevelResult.newSkillLearned}]${powerNote}!`, "levelup");
         }
 
         if (Math.random() < 0.3) {
@@ -1280,8 +1594,24 @@
             }
         }
 
+        if (Math.random() < 0.7) {
+            const material = Object.keys(materialLabels)[Math.floor(Math.random() * Object.keys(materialLabels).length)];
+            const amount = 1 + Math.floor(Math.random() * 2);
+            player.craftingMaterials[material] = (player.craftingMaterials[material] || 0) + amount;
+            addLog(`* Found ${materialLabels[material]} x${amount}.`, 'levelup');
+        }
+
+        if (Math.random() < 0.2) {
+            const slot = Object.keys(armorSlots)[Math.floor(Math.random() * Object.keys(armorSlots).length)];
+            const armorLevel = 1 + Math.floor(Math.random() * player.getLevel());
+            const foundArmor = makeArmor(slot, armorLevel);
+            player.armorInventory.push(foundArmor);
+            addLog(`* Discovered ${foundArmor.name} Lv. ${foundArmor.level}!`, 'levelup');
+        }
+
         updateUI();
         btnNext.style.display = 'block';
+        btnRun.style.display = 'none';
     }
 
     function executePlayerAction(actionFn) {
@@ -1376,13 +1706,51 @@
     });
 
     btnNext.addEventListener('click', () => {
+        let isBossSpawn = enemy.isBoss;
+        if (!enemyReadyToStart) {
+            player.resetModifiers();
+            player.setSp(player.getMaxSp());
+            addLog('* SP fully restored before the next encounter.', 'system');
+            roundNumber++;
+            isBossSpawn = roundNumber > 10 && Math.random() < 0.2;
+            enemy = ShadowFactory.spawn(player.getLevel(), isBossSpawn);
+        }
+        enemyReadyToStart = false;
+        btnNext.style.display = 'none';
+        btnNext.innerText = 'NEXT ENCOUNTER *';
+        
+        initEncounterAnimation(isBossSpawn);
+        updateUI();
+    });
+
+    btnRun.addEventListener('click', () => {
+        if (!player.isAlive() || !enemy.isAlive() || btnNext.style.display === 'block') return;
+        if (Math.random() < 0.25) {
+            executePlayerAction(() => ({
+                text: '* You tried to escape, but the enemy blocked your path!',
+                type: 'player',
+                isWeak: false
+            }));
+            return;
+        }
+        disableButtons();
         player.resetModifiers();
+        player.setHp(player.getMaxHp());
+        player.setSp(player.getMaxSp());
         roundNumber++;
         const isBossSpawn = roundNumber > 10 && Math.random() < 0.2;
         enemy = ShadowFactory.spawn(player.getLevel(), isBossSpawn);
-        btnNext.style.display = 'none';
-        
-        initEncounterAnimation(isBossSpawn);
+        enemyReadyToStart = true;
+        btnNext.innerText = 'CONTINUE TO NEXT ENCOUNTER *';
+        btnNext.style.display = 'block';
+        btnRun.style.display = 'none';
+        pixelRunner.classList.remove('pixel-traversing');
+        pixelRunner.style.left = 'calc(50% - 32px)';
+        pixelStage.classList.add('resting');
+        addLog('* You escaped the encounter and returned to the campfire. HP and SP restored.', 'system');
+        saveGameData();
+        renderArmorWorkshop();
+        workshopBackdrop.hidden = false;
         updateUI();
     });
 
