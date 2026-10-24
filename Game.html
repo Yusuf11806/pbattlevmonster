@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PBattle V Monster</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        /* Main Menu Styles */
+        #main-menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: #000000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            gap: 20px;
+            border: 4px solid #ffff00;
+        }
+
+        #main-menu h1 {
+            color: #ffff00;
+            font-size: 40px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .menu-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 250px;
+        }
+
+        /* Game Container Styles - Undertale Box */
+        .game-container {
+            width: 95vw;
+            max-width: 1200px;
+            height: 95vh;
+            background: #000000;
+            border: 4px solid #ffffff;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #ffffff;
+            padding-bottom: 10px;
+        }
+
+        .header-titles { text-align: left; }
+        .header h1 {
+            color: #ffff00;
+            font-size: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .header p { color: #aaaaaa; font-size: 11px; margin-top: 2px; }
+
+        .header-actions { display: flex; gap: 10px; }
+        .header-actions button {
+            color: black;
+            background: #ffffff;
+            border: none;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .header-actions button:hover { background: #ffff00; }
+
+        .btn-campfire { background: #ff8800 !important; color: #000 !important; }
+        .btn-campfire:hover { background: #ffa500 !important; }
+
+        /* Pixel Animation Stage */
+        .pixel-stage {
+            width: 100%;
+            height: 60px;
+            background: #000000;
+            border: 2px solid #ffffff;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        .pixel-runner {
+            position: absolute;
+            left: 10px;
+            bottom: 6px;
+            height: 44px;
+            width: 44px;
+            image-rendering: pixelated;
+            transition: left 1.2s linear;
+            z-index: 2;
+        }
+
+        .pixel-enemy-stage {
+            position: absolute;
+            right: 20px;
+            bottom: 6px;
+            height: 44px;
+            width: 44px;
+            image-rendering: pixelated;
+            z-index: 2;
+        }
+
+        /* Arena Display */
+        .arena {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            flex: 1; 
+        }
+
+        .card {
+            flex: 1;
+            background: #000000;
+            padding: 14px;
+            border: 2px solid #ffffff;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; }
+        .card h2 { font-size: 16px; color: #00ffff; }
+        .card.enemy h2 { color: #ff0055; }
+        .card.enemy.boss h2 { color: #ffff00; }
+
+        .level-badge {
+            background: #000000;
+            color: #ffff00;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border: 1px solid #ffff00;
+        }
+
+        .info-text {
+            font-size: 11px;
+            color: #aaaaaa;
+            background: #000000;
+            padding: 6px;
+            border: 1px dashed #555555;
+        }
+
+        .status-text {
+            font-size: 11px;
+            padding: 3px;
+            border: 1px dashed #ffffff;
+            text-align: center;
+            color: #ffff00;
+        }
+        
+        .buff-up { color: #00ff00; font-weight: bold; }
+        .buff-down { color: #ff0055; font-weight: bold; }
+
+        .highlight-curse { color: #bf00ff; font-weight: bold; }
+        .highlight-ice { color: #00ffff; font-weight: bold; }
+        .highlight-fire { color: #ff0000; font-weight: bold; }
+        .highlight-elec { color: #ffff00; font-weight: bold; }
+        .highlight-none { color: #ffffff; font-weight: bold; }
+
+        .stat-group { display: flex; flex-direction: column; gap: 3px; }
+        .stat-label { font-size: 11px; color: #ffffff; display: flex; justify-content: space-between; }
+        .bar-bg {
+            width: 100%;
+            height: 10px;
+            background: #555555;
+            overflow: hidden;
+            border: 1px solid #ffffff;
+        }
+        .bar-fill { height: 100%; width: 100%; transition: width 0.3s ease-in-out; }
+        .hp-fill { background: #00ff00; }
+        .sp-fill { background: #00ffff; }
+        .exp-fill { background: #ffff00; }
+
+        /* Battle Log */
+        .log-box {
+            height: 18vh; 
+            min-height: 100px;
+            background: #000000;
+            border: 2px solid #ffffff;
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.4;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .log-entry { margin: 0; }
+        .log-player { color: #00ffff; }
+        .log-enemy { color: #ff0055; }
+        .log-system { color: #ffffff; }
+        .log-levelup { color: #00ff00; font-weight: bold; }
+        .log-weakness { color: #ffff00; font-weight: bold; font-size: 14px; }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+        .btn {
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            padding: 10px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .btn:hover:not(:disabled) { background: #ffff00; color: #000000; border-color: #ffff00; }
+        .btn:disabled { background: #222222; color: #555555; border-color: #555555; cursor: not-allowed; }
+        .btn-secondary { color: #00ffff; border-color: #00ffff; }
+        .btn-secondary:hover:not(:disabled) { background: #00ffff; color: #000000; }
+        .btn-switch { color: #bf00ff; border-color: #bf00ff; }
+        .btn-switch:hover:not(:disabled) { background: #bf00ff; color: #000000; }
+        
+        .item-select, .skill-select {
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            padding: 8px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .item-select:disabled, .skill-select:disabled { background: #222222; color: #555555; border-color: #555555; }
+        
+        .btn-item { background: #000000; color: #ff8800; border: 2px solid #ff8800; padding: 10px; font-size: 12px; }
+        .btn-item:hover:not(:disabled) { background: #ff8800; color: #000000; }
+
+        .btn-next, .btn-reset { grid-column: span 3; background: #000000; color: #00ff00; border: 2px solid #00ff00; padding: 10px; }
+        .btn-next:hover, .btn-reset:hover { background: #00ff00; color: #000000; }
+        .btn-reset { color: #ff0055; border-color: #ff0055; }
+        .btn-reset:hover { background: #ff0055; color: #000000; }
+
+    </style>
+</head>
+<body>
+
+<audio id="bgm" src="life_will_change_instrumental.mp3" loop></audio>
+
+<!-- Main Menu -->
+<div id="main-menu">
+    <h1>PBattle V Monster</h1>
+    <div class="menu-controls">
+        <button id="btn-start-game" class="btn">START GAME</button>
+        <button id="btn-load-game" class="btn btn-secondary" style="display:none;">LOAD GAME</button>
+        <button id="btn-menu-sound" class="btn btn-secondary">SOUND: OFF</button>
+        <button id="btn-exit" class="btn btn-reset">EXIT</button>
+    </div>
+</div>
+
+<!-- Game UI -->
+<div class="game-container" id="game-ui" style="display: none;">
+    <div class="header">
+        <div class="header-titles">
+            <h1>PBattle V Monster</h1>
+            <p>* Determination Engine • Skill Evolution System</p>
+        </div>
+        <div class="header-actions">
+            <button id="btn-campfire" class="btn-campfire">🔥 REST AT CAMPFIRE</button>
+            <button id="btn-bgm" class="btn-bgm">PLAY BGM</button>
+            <button id="btn-quit" class="btn-quit">MENU</button>
+        </div>
+    </div>
+
+    <!-- Undertale Pixel Encounter Stage -->
+    <div class="pixel-stage">
+        <img src="image_03aa43.png" alt="Character" id="pixel-runner" class="pixel-runner" onerror="this.style.display='none'; document.getElementById('fallback-runner').style.display='block';">
+        <span id="fallback-runner" style="display:none; position:absolute; left:10px; bottom:12px; font-size:18px;">❤️</span>
+
+        <img src="image_03aadd.png" alt="Enemy" id="pixel-enemy" class="pixel-enemy-stage" onerror="this.style.display='none'; document.getElementById('fallback-enemy').style.display='block';">
+        <span id="fallback-enemy" style="display:none; position:absolute; right:20px; bottom:12px; font-size:18px;">👾</span>
+    </div>
+
+    <!-- Arena Display -->
+    <div class="arena">
+        <!-- Player Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2 id="player-name">Yusuf Rayyan Daniel</h2>
+                <span id="player-level" class="level-badge">LV 1</span>
+            </div>
+            <div class="info-text" id="persona-info">
+                InnerSelf: Arsene (Lv. 1)<br>Active Skill: Eiha (Curse)
+            </div>
+            <div class="status-text" id="player-status">* STATUS: NORMAL</div>
+            
+            <div class="stat-group">
+                <div class="stat-label"><span>HP</span><span id="player-hp-text">150/150</span></div>
+                <div class="bar-bg"><div id="player-hp-bar" class="bar-fill hp-fill" style="width: 100%;"></div></div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label"><span>SP</span><span id="player-sp-text">50/50</span></div>
+                <div class="bar-bg"><div id="player-sp-bar" class="bar-fill sp-fill" style="width: 100%;"></div></div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label"><span>EXP</span><span id="player-exp-text">0/50</span></div>
+                <div class="bar-bg"><div id="player-exp-bar" class="bar-fill exp-fill" style="width: 0%;"></div></div>
+            </div>
+        </div>
+
+        <!-- Enemy Card -->
+        <div class="card enemy" id="enemy-card">
+            <div class="card-header">
+                <h2 id="enemy-name">Shadow</h2>
+                <span id="enemy-level" class="level-badge">LV 1</span>
+            </div>
+            <div class="info-text" id="enemy-info">
+                Weak: <span id="enemy-weak">Ice</span> | Resist: <span id="enemy-resist">Fire</span>
+            </div>
+            <div class="status-text" id="enemy-status">* STATUS: NORMAL</div>
+            
+            <div class="stat-group">
+                <div class="stat-label"><span>HP</span><span id="enemy-hp-text">100/100</span></div>
+                <div class="bar-bg"><div id="enemy-hp-bar" class="bar-fill hp-fill" style="width: 100%;"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terminal Log / Dialogue Box -->
+    <div class="log-box" id="game-log"></div>
+
+    <!-- Actions -->
+    <div class="controls">
+        <button id="btn-attack" class="btn">FIGHT</button>
+        <select id="skill-select" class="skill-select"></select>
+        <button id="btn-skill" class="btn btn-secondary">CAST SKILL</button>
+        <button id="btn-switch" class="btn btn-switch">INNERSELF</button>
+        
+        <select id="item-select" class="item-select"></select>
+        <button id="btn-item" class="btn btn-item">ITEM</button>
+
+        <button id="btn-next" class="btn btn-next" style="display:none;">NEXT ENCOUNTER *</button>
+        <button id="btn-reset" class="btn btn-reset" style="display:none;">RESTART GAME *</button>
+    </div>
+</div>
+
+<script>
+    // --- Homepage & Global BGM Logic ---
+    const mainMenu = document.getElementById('main-menu');
+    const gameUI = document.getElementById('game-ui');
+    const bgm = document.getElementById('bgm');
+    let playerName = 'Guest';
+    let bgmPlaying = false;
+    const menuSoundButton = document.getElementById('btn-menu-sound');
+    const bgmButton = document.getElementById('btn-bgm');
+
+    function playBgm() {
+        bgm.play().then(() => {
+            bgmPlaying = true;
+            menuSoundButton.innerText = "SOUND: ON";
+            bgmButton.innerText = "PAUSE BGM";
+        }).catch(() => {
+            // Browsers may wait for the user's first interaction before playing audio.
+            bgmPlaying = false;
+            menuSoundButton.innerText = "SOUND: OFF";
+            bgmButton.innerText = "PLAY BGM";
+        });
+    }
+
+    function toggleSound() {
+        if (bgmPlaying) {
+            bgm.pause();
+            bgmPlaying = false;
+            menuSoundButton.innerText = "SOUND: OFF";
+            bgmButton.innerText = "PLAY BGM";
+        } else {
+            playBgm();
+        }
+    }
+
+    // Try autoplay on page open; resume on the first user gesture if the browser blocks it.
+    playBgm();
+    document.addEventListener('pointerdown', (event) => {
+        // The sound buttons already toggle playback on click; don't start here
+        // as well or their click handler would immediately pause the music.
+        if (!bgmPlaying && !event.target.closest('#btn-menu-sound, #btn-bgm')) playBgm();
+    });
+
+    const btnLoadGame = document.getElementById('btn-load-game');
+    if (localStorage.getItem('pbattle_save_data')) {
+        btnLoadGame.style.display = 'block';
+    }
+
+    document.getElementById('btn-start-game').addEventListener('click', () => {
+        const enteredName = prompt('What should we call you?', playerName);
+        if (enteredName === null) return;
+        playerName = enteredName.trim() || 'Guest';
+        player._name = playerName;
+        mainMenu.style.display = 'none';
+        gameUI.style.display = 'flex';
+        initEncounterAnimation();
+        updateUI();
+    });
+
+    btnLoadGame.addEventListener('click', () => {
+        if (loadGameData()) {
+            mainMenu.style.display = 'none';
+            gameUI.style.display = 'flex';
+            addLog("* Game loaded successfully from Campfire storage[cite: 2].", "system");
+            updateUI();
+        } else {
+            alert("Failed to load save data.");
+        }
+    });
+
+    document.getElementById('btn-quit').addEventListener('click', () => {
+        gameUI.style.display = 'none';
+        mainMenu.style.display = 'flex';
+        if (localStorage.getItem('pbattle_save_data')) {
+            btnLoadGame.style.display = 'block';
+        }
+    });
+
+    document.getElementById('btn-menu-sound').addEventListener('click', toggleSound);
+    document.getElementById('btn-bgm').addEventListener('click', toggleSound);
+    document.getElementById('btn-exit').addEventListener('click', () => {
+        mainMenu.innerHTML = '<h1 style="color:#ffff00;">GAME CLOSED.</h1><p>* Stay determined.</p>';
+    });
+
+    // --- Campfire Save / Load System ---
+    function saveGameData() {
+        const saveData = {
+            name: player.getName(),
+            level: player.getLevel(),
+            hp: player.getHp(),
+            maxHp: player._maxHp,
+            sp: player.getSp(),
+            maxSp: player._maxSp,
+            exp: player.getExp(),
+            maxExp: player.getMaxExp(),
+            baseAtk: player._baseAtk,
+            inventory: player.inventory,
+            innerselftypes: player.innerselftypes.map(p => ({
+                name: p.name,
+                skills: p.skills,
+                activeSkillIndex: p.activeSkillIndex,
+                level: p.level,
+                exp: p.exp,
+                maxExp: p.maxExp
+            })),
+            activePersonaIndex: player.activePersonaIndex
+        };
+        localStorage.setItem('pbattle_save_data', JSON.stringify(saveData));
+        addLog("* Grace discovered. Game Saved at Campfire[cite: 2]!", "levelup");
+        btnLoadGame.style.display = 'block';
+    }
+
+    function loadGameData() {
+        const rawData = localStorage.getItem('pbattle_save_data');
+        if (!rawData) return false;
+        try {
+            const data = JSON.parse(rawData);
+            const loadedInnerSelves = data.innerselftypes.map(pData => {
+                const p = new InnerSelf(pData.name, pData.skills);
+                p.activeSkillIndex = pData.activeSkillIndex;
+                p.level = pData.level;
+                p.exp = pData.exp;
+                p.maxExp = pData.maxExp;
+                return p;
+            });
+
+            playerName = data.name || 'Guest';
+            player = new Player(playerName, data.maxHp, data.maxSp, loadedInnerSelves);
+            player._level = data.level;
+            player._hp = data.hp;
+            player._sp = data.sp;
+            player._exp = data.exp;
+            player._maxExp = data.maxExp;
+            player._baseAtk = data.baseAtk;
+            player.inventory = data.inventory;
+            player.activePersonaIndex = data.activePersonaIndex;
+
+            enemy = ShadowFactory.spawn(player.getLevel());
+            logBox.innerHTML = '';
+            btnNext.style.display = 'none';
+            btnReset.style.display = 'none';
+            enableButtons();
+            return true;
+        } catch (e) {
+            console.error(e);
+            return false;
+        }
+    }
+
+    document.getElementById('btn-campfire').addEventListener('click', () => {
+        if (!player.isAlive()) return;
+        player.setHp(player.getMaxHp());
+        player.setSp(player.getMaxSp());
+        saveGameData();
+        updateUI();
+    });
+
+    // --- Animation Controller ---
+    const pixelRunner = document.getElementById('pixel-runner');
+    const fallbackRunner = document.getElementById('fallback-runner');
+
+    function initEncounterAnimation(isBoss = false) {
+        disableButtons();
+        
+        const activeRunner = pixelRunner.complete && pixelRunner.naturalHeight !== 0 ? pixelRunner : fallbackRunner;
+        activeRunner.style.transition = 'none';
+        activeRunner.style.left = '10px';
+
+        void activeRunner.offsetWidth;
+
+        activeRunner.style.transition = 'left 1.2s linear';
+        activeRunner.style.left = 'calc(100% - 70px)';
+
+        setTimeout(() => {
+            enableButtons();
+            if (isBoss) {
+                addLog(`* DANGER! A formidable enemy blocks the path!`, "enemy");
+            } else {
+                addLog(`* A Lv. ${enemy.getLevel()} ${enemy.getName()} approaches!`, "system");
+            }
+            updateUI();
+        }, 1200);
+    }
+
+    // --- Game Logic ---
+    function calculateRandomDamage(baseAtk) {
+        const variance = 0.85 + (Math.random() * 0.30);
+        return Math.max(1, Math.floor(baseAtk * variance));
+    }
+
+    const itemPool = [
+        { id: 'medicine', name: "Monster Candy", type: 'heal_hp', value: 50, desc: "Heals 50 HP" },
+        { id: 'ointment', name: "Cinna-Bun", type: 'heal_hp', value: 150, desc: "Heals 150 HP" },
+        { id: 'snuff_soul', name: "Spider Cider", type: 'heal_sp', value: 30, desc: "Restores 30 SP" },
+        { id: 'tarukaja', name: "Determined Gem", type: 'buff_atk', value: 1.5, turns: 3, desc: "ATK Up (3 turns)" },
+        { id: 'rakukaja', name: "Steadfast Gem", type: 'buff_def', value: 0.5, turns: 3, desc: "DEF Up (3 turns)" },
+        { id: 'rakunda', name: "Flimsy Charm", type: 'debuff_def', value: 1.5, turns: 3, desc: "Enemy DEF Down" },
+        { id: 'tarunda', name: "Fragile Charm", type: 'debuff_atk', value: 0.5, turns: 3, desc: "Enemy ATK Down" }
+    ];
+
+    class GameCharacter {
+        constructor(name, hp, sp, level = 1, baseAtk = 10) {
+            this._name = name;
+            this._maxHp = hp;
+            this._hp = hp;
+            this._maxSp = sp;
+            this._sp = sp;
+            this._level = level;
+            this._baseAtk = baseAtk;
+            this.resetModifiers();
+        }
+
+        resetModifiers() {
+            this.modifiers = { atkMult: 1, atkTurns: 0, defMult: 1, defTurns: 0 };
+        }
+
+        applyBuff(type, mult, turns) {
+            if(type === 'atk') { this.modifiers.atkMult = mult; this.modifiers.atkTurns = turns; }
+            if(type === 'def') { this.modifiers.defMult = mult; this.modifiers.defTurns = turns; }
+        }
+
+        tickModifiers() {
+            let logs = [];
+            if(this.modifiers.atkTurns > 0) {
+                this.modifiers.atkTurns--;
+                if(this.modifiers.atkTurns === 0) {
+                    this.modifiers.atkMult = 1;
+                    logs.push(`* ${this.getName()}'s stats normalized.`);
+                }
+            }
+            if(this.modifiers.defTurns > 0) {
+                this.modifiers.defTurns--;
+                if(this.modifiers.defTurns === 0) {
+                    this.modifiers.defMult = 1;
+                    logs.push(`* ${this.getName()}'s defense normalized.`);
+                }
+            }
+            return logs;
+        }
+
+        getName() { return this._name; }
+        getHp() { return this._hp; }
+        getMaxHp() { return this._maxHp; }
+        getSp() { return this._sp; }
+        getMaxSp() { return this._maxSp; }
+        getLevel() { return this._level; }
+        getBaseAtk() { return this._baseAtk + (this._level * 3); }
+        isAlive() { return this._hp > 0; }
+
+        setHp(value) { this._hp = Math.max(0, Math.min(value, this._maxHp)); }
+        setSp(value) { this._sp = Math.max(0, Math.min(value, this._maxSp)); }
+        takeDamage(amount) { this.setHp(this._hp - amount); return amount; }
+    }
+
+    class InnerSelf {
+        constructor(name, skills) {
+            this.name = name;
+            this.skills = skills; // Array of skill objects: { name, spCost, power, element, effectType, effectValue, effectTurns, learnLevel }
+            this.activeSkillIndex = 0;
+            this.level = 1;
+            this.exp = 0;
+            this.maxExp = 30;
+        }
+
+        getActiveSkill() {
+            return this.skills[this.activeSkillIndex] || this.skills[0];
+        }
+
+        gainExp(amount) {
+            this.exp += amount;
+            let leveledUp = false;
+            let newSkillLearned = null;
+
+            while (this.exp >= this.maxExp) {
+                this.level++;
+                this.exp -= this.maxExp;
+                this.maxExp = Math.floor(this.maxExp * 1.5);
+                leveledUp = true;
+
+                // Check if any skill unlocks at this level
+                const foundSkill = this.unlockableSkillPool.find(s => s.learnLevel === this.level && !this.skills.some(existing => existing.name === s.name));
+                if (foundSkill) {
+                    this.skills.push(foundSkill);
+                    newSkillLearned = foundSkill.name;
+                }
+            }
+            return { leveledUp, newSkillLearned };
+        }
+    }
+
+    // Attach level-up skill evolution pools to InnerSelf class
+    InnerSelf.prototype.unlockableSkillPool = [
+        { name: "Maragion", spCost: 18, power: 45, element: "Fire", effectType: 'damage', learnLevel: 2 },
+        { name: "Mediarahan", spCost: 22, power: 150, element: "None", effectType: 'heal', learnLevel: 3 },
+        { name: "Heat Riser", spCost: 25, power: 0, element: "None", effectType: 'buff_atk', effectValue: 1.5, effectTurns: 3, learnLevel: 3 },
+        { name: "Mabufu", spCost: 18, power: 45, element: "Ice", effectType: 'damage', learnLevel: 2 },
+        { name: "Megidola", spCost: 30, power: 75, element: "None", effectType: 'damage', learnLevel: 4 }
+    ];
+
+    class Player extends GameCharacter {
+        constructor(name, hp, sp, innerselftypes) {
+            super(name, hp, sp, 1, 12);
+            this.innerselftypes = innerselftypes;
+            this.activePersonaIndex = 0;
+            this._exp = 0;
+            this._maxExp = 50;
+            this.inventory = { 'medicine': 3, 'snuff_soul': 1, 'tarukaja': 1, 'rakunda': 1 };
+        }
+
+        getActiveInnerSelf() { return this.innerselftypes[this.activePersonaIndex]; }
+        switchInnerSelf() {
+            this.activePersonaIndex = (this.activePersonaIndex + 1) % this.innerselftypes.length;
+            return this.getActiveInnerSelf();
+        }
+
+        getExp() { return this._exp; }
+        getMaxExp() { return this._maxExp; }
+
+        gainExp(amount) {
+            this._exp += amount;
+            let leveledUp = false;
+            while (this._exp >= this._maxExp) {
+                this._level++;
+                this._exp -= this._maxExp;
+                this._maxExp = Math.floor(this._maxExp * 1.5);
+                this._maxHp += 20;
+                this._maxSp += 10;
+                this._hp = this._maxHp;
+                this._sp = this._maxSp;
+                leveledUp = true;
+            }
+            return { expGained: amount, leveledUp: leveledUp };
+        }
+
+        performAction(target, actionType) {
+            if (actionType === 'skill') {
+                const inner = this.getActiveInnerSelf();
+                const skill = inner.getActiveSkill();
+
+                if (this.getSp() >= skill.spCost) {
+                    this.setSp(this.getSp() - skill.spCost);
+                    
+                    let text = "";
+                    let isWeak = false;
+
+                    if (skill.effectType === 'heal') {
+                        let healAmt = skill.power + (inner.level * 10);
+                        this.setHp(this.getHp() + healAmt);
+                        text = `* ${inner.name} cast [${skill.name}]. Restored ${healAmt} HP to Yusuf!`;
+                    } else if (skill.effectType === 'buff_atk') {
+                        this.applyBuff('atk', skill.effectValue, skill.effectTurns);
+                        text = `* ${inner.name} cast [${skill.name}]. Yusuf's Attack increased for ${skill.effectTurns} turns!`;
+                    } else if (skill.effectType === 'debuff_def') {
+                        target.applyBuff('def', skill.effectValue, skill.effectTurns);
+                        text = `* ${inner.name} cast [${skill.name}]. Enemy Defense lowered for ${skill.effectTurns} turns!`;
+                    } else if (skill.effectType === 'element_vulnerability') {
+                        target.applyVulnerability(skill.element, skill.effectTurns);
+                        text = `* ${inner.name} cast [${skill.name}]. Enemy made weak to [${skill.element}] for ${skill.effectTurns} rounds!`;
+                    } else {
+                        // Standard elemental or physical attack skill
+                        let rawDmg = (this.getBaseAtk() + skill.power) * this.modifiers.atkMult;
+                        let multiplier = 1.0;
+                        let isResist = false;
+
+                        if (target.weakness === skill.element || target.isForcedWeak(skill.element)) { 
+                            multiplier = 2.0; 
+                            isWeak = true; 
+                        }
+                        else if (target.resist === skill.element) { 
+                            multiplier = 0.4; 
+                            isResist = true; 
+                        }
+
+                        let finalMultiplier = multiplier * target.modifiers.defMult;
+                        const finalDmg = target.takeDamage(calculateRandomDamage(rawDmg * finalMultiplier));
+                        
+                        text = `* ${inner.name} cast [${skill.name}]. Dealt ${finalDmg} damage!`;
+                        if (isWeak) text = `* CRITICAL! Weakness exploited! ` + text;
+                        if (isResist) text = `* Attack was resisted... ` + text;
+                    }
+
+                    return { text: text, type: 'player', isWeak: isWeak };
+                }
+            } 
+            
+            let rawMeleeDmg = Math.floor(this.getBaseAtk() * 0.6) * this.modifiers.atkMult;
+            let finalMeleeMult = 1.0 * target.modifiers.defMult;
+            const finalDmg = target.takeDamage(calculateRandomDamage(rawMeleeDmg * finalMeleeMult));
+            return { text: `* You attacked for ${finalDmg} damage.`, type: 'player', isWeak: false };
+        }
+    }
+
+    class Shadow extends GameCharacter {
+        constructor(name, level, hp, baseAtk, expReward, weakness, resist) {
+            super(name, hp, 0, level, baseAtk);
+            this.expReward = expReward;
+            this.weakness = weakness;
+            this.resist = resist;
+            this.forcedWeakElement = null;
+            this.forcedWeakTurns = 0;
+            this.isBoss = false;
+        }
+
+        applyVulnerability(element, turns) {
+            this.forcedWeakElement = element;
+            this.forcedWeakTurns = turns;
+        }
+
+        isForcedWeak(element) {
+            return this.forcedWeakTurns > 0 && this.forcedWeakElement === element;
+        }
+
+        tickModifiers() {
+            let logs = super.tickModifiers();
+            if (this.forcedWeakTurns > 0) {
+                this.forcedWeakTurns--;
+                if (this.forcedWeakTurns === 0) {
+                    this.forcedWeakElement = null;
+                    logs.push(`* Enemy elemental vulnerability wore off.`);
+                }
+            }
+            return logs;
+        }
+
+        performAction(target) {
+            let enemyRaw = this.getBaseAtk() * this.modifiers.atkMult;
+            let finalEnemyMult = 1.0 * target.modifiers.defMult;
+            const finalDmg = target.takeDamage(calculateRandomDamage(enemyRaw * finalEnemyMult));
+            return { text: `* ${this.getName()} strikes back for ${finalDmg} damage!`, type: 'enemy' };
+        }
+    }
+
+    class ShadowFactory {
+        static enemyPrototypes = [
+            { name: "Agathion Shadow", hpBase: 90, atkBase: 12, expBase: 35, weak: "Ice", resist: "Fire" },
+            { name: "Pixie Shadow", hpBase: 65, atkBase: 15, expBase: 40, weak: "Curse", resist: "Elec" },
+            { name: "Jack-o'-Lantern", hpBase: 85, atkBase: 14, expBase: 45, weak: "Ice", resist: "Fire" },
+            { name: "Berith Shadow", hpBase: 130, atkBase: 18, expBase: 60, weak: "Elec", resist: "Curse" },
+            { name: "Kelpie Shadow", hpBase: 110, atkBase: 16, expBase: 50, weak: "Elec", resist: "Ice" },
+            { name: "Slime", hpBase: 150, atkBase: 10, expBase: 40, weak: "Fire", resist: "Ice" }
+        ];
+
+        static bossPrototypes = [
+            { name: "King Frost", hpBase: 280, atkBase: 25, expBase: 120, weak: "Fire", resist: "Ice" },
+            { name: "Shadow Kamoshida", hpBase: 350, atkBase: 28, expBase: 180, weak: "None", resist: "Curse" },
+            { name: "Madarame's Illusion", hpBase: 320, atkBase: 26, expBase: 160, weak: "Elec", resist: "Fire" }
+        ];
+
+        static spawn(playerLevel, isBoss = false) {
+            const enemyLevel = isBoss ? playerLevel + 2 : Math.max(1, playerLevel + Math.floor(Math.random() * 3) - 1);
+            const pool = isBoss ? this.bossPrototypes : this.enemyPrototypes;
+            const proto = pool[Math.floor(Math.random() * pool.length)];
+            
+            const hpMult = isBoss ? 35 : 18;
+            const atkMult = isBoss ? 5 : 3;
+            
+            const scaledHp = proto.hpBase + (enemyLevel * hpMult);
+            const scaledAtk = proto.atkBase + (enemyLevel * atkMult);
+            const scaledExp = proto.expBase + (enemyLevel * (isBoss ? 20 : 12));
+
+            let shadow = new Shadow(proto.name, enemyLevel, scaledHp, scaledAtk, scaledExp, proto.weak, proto.resist);
+            shadow.isBoss = isBoss;
+            return shadow;
+        }
+    }
+
+    const capturePool = [
+        { name: "Pixie", skills: [{ name: "Zio", spCost: 8, power: 25, element: "Elec", effectType: 'damage' }] },
+        { name: "Slime", skills: [{ name: "Eiha", spCost: 10, power: 30, element: "Curse", effectType: 'damage' }] },
+        { name: "Bicorn", skills: [{ name: "Agi", spCost: 11, power: 32, element: "Fire", effectType: 'damage' }] },
+        { name: "Silky", skills: [{ name: "Bufu", spCost: 11, power: 32, element: "Ice", effectType: 'damage' }] },
+        { name: "Ose", skills: [{ name: "Cleave", spCost: 12, power: 35, element: "None", effectType: 'damage' }] }
+    ];
+
+    // Starting with 5 Unique Custom InnerSelves with initial skill sets
+    let player = new Player("Yusuv Rayyan Daniel", 150, 50, [
+        new InnerSelf("Arsene", [
+            { name: "Eiha", spCost: 10, power: 30, element: "Curse", effectType: 'damage' }
+        ]),
+        new InnerSelf("Captain Kidd", [
+            { name: "Dia", spCost: 12, power: 40, element: "None", effectType: 'heal' }
+        ]),
+        new InnerSelf("Carmen", [
+            { name: "Tarukaja", spCost: 8, power: 0, element: "None", effectType: 'buff_atk', effectValue: 1.5, effectTurns: 3 }
+        ]),
+        new InnerSelf("Goemon", [
+            { name: "Rakunda", spCost: 8, power: 0, element: "None", effectType: 'debuff_def', effectValue: 1.5, effectTurns: 3 }
+        ]),
+        new InnerSelf("Necronomicon", [
+            { name: "Scan Weakness", spCost: 12, power: 0, element: "Ice", effectType: 'element_vulnerability', effectTurns: 3 }
+        ])
+    ]);
+    let enemy = ShadowFactory.spawn(player.getLevel());
+
+    const logBox = document.getElementById('game-log');
+    const btnAttack = document.getElementById('btn-attack');
+    const btnSkill = document.getElementById('btn-skill');
+    const btnSwitch = document.getElementById('btn-switch');
+    const btnItem = document.getElementById('btn-item');
+    const itemSelect = document.getElementById('item-select');
+    const skillSelect = document.getElementById('skill-select');
+    const btnNext = document.getElementById('btn-next');
+    const btnReset = document.getElementById('btn-reset');
+
+    function getElementColorClass(element) {
+        if (element === "Curse") return "highlight-curse";
+        if (element === "Ice") return "highlight-ice";
+        if (element === "Fire") return "highlight-fire";
+        if (element === "Elec") return "highlight-elec";
+        return "highlight-none";
+    }
+
+    function renderStatus(char, elementId) {
+        let statuses = [];
+        if(char.modifiers.atkMult > 1) statuses.push("<span class='buff-up'>ATK UP</span>");
+        if(char.modifiers.atkMult < 1) statuses.push("<span class='buff-down'>ATK DOWN</span>");
+        if(char.modifiers.defMult < 1) statuses.push("<span class='buff-up'>DEF UP</span>"); 
+        if(char.modifiers.defMult > 1) statuses.push("<span class='buff-down'>DEF DOWN</span>"); 
+        if(char.forcedWeakTurns > 0) statuses.push(`<span class='buff-down'>WEAK TO ${char.forcedWeakElement} (${char.forcedWeakTurns}T)</span>`);
+        
+        document.getElementById(elementId).innerHTML = statuses.length > 0 ? `* STATUS: ${statuses.join(" | ")}` : "* STATUS: NORMAL";
+    }
+
+    function updateSkillSelectUI() {
+        const inner = player.getActiveInnerSelf();
+        skillSelect.innerHTML = '';
+        
+        inner.skills.forEach((skill, index) => {
+            const opt = document.createElement('option');
+            opt.value = index;
+            opt.innerText = `${skill.name} (-${skill.spCost} SP)`;
+            if (index === inner.activeSkillIndex) {
+                opt.selected = true;
+            }
+            skillSelect.appendChild(opt);
+        });
+    }
+
+    skillSelect.addEventListener('change', (e) => {
+        const inner = player.getActiveInnerSelf();
+        inner.activeSkillIndex = parseInt(e.target.value);
+        updateUI();
+    });
+
+    function updateInventoryUI() {
+        itemSelect.innerHTML = '';
+        let hasItems = false;
+        
+        for (const [id, count] of Object.entries(player.inventory)) {
+            if (count > 0) {
+                hasItems = true;
+                const item = itemPool.find(i => i.id === id);
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.innerText = `${item.name} (x${count}) - ${item.desc}`;
+                itemSelect.appendChild(opt);
+            }
+        }
+        
+        if (!hasItems) {
+            const opt = document.createElement('option');
+            opt.innerText = "Inventory Empty";
+            itemSelect.appendChild(opt);
+            itemSelect.disabled = true;
+            btnItem.disabled = true;
+        } else {
+            itemSelect.disabled = false;
+            btnItem.disabled = false;
+        }
+    }
+
+    function updateUI() {
+        const inner = player.getActiveInnerSelf();
+        const skill = inner.getActiveSkill();
+
+        document.getElementById('player-name').innerText = player.getName();
+        document.getElementById('player-level').innerText = `LV ${player.getLevel()}`;
+        document.getElementById('persona-info').innerHTML = `InnerSelf: <strong>${inner.name}</strong> (Lv. ${inner.level}) <br>Active Skill: <strong>${skill.name}</strong> (<span class="${getElementColorClass(skill.element)}">${skill.element}</span>) | -${skill.spCost} SP`;
+        renderStatus(player, 'player-status');
+        
+        document.getElementById('player-hp-text').innerText = `${player.getHp()}/${player.getMaxHp()}`;
+        document.getElementById('player-hp-bar').style.width = `${Math.max(0, (player.getHp() / player.getMaxHp()) * 100)}%`;
+        document.getElementById('player-sp-text').innerText = `${player.getSp()}/${player.getMaxSp()}`;
+        document.getElementById('player-sp-bar').style.width = `${Math.max(0, (player.getSp() / player.getMaxSp()) * 100)}%`;
+        document.getElementById('player-exp-text').innerText = `${player.getExp()}/${player.getMaxExp()}`;
+        document.getElementById('player-exp-bar').style.width = `${Math.min(100, (player.getExp() / player.getMaxExp()) * 100)}%`;
+
+        const enemyCard = document.getElementById('enemy-card');
+        if (enemy.isBoss) {
+            enemyCard.classList.add('boss');
+            document.getElementById('enemy-name').innerText = `👑 ${enemy.getName()}`;
+        } else {
+            enemyCard.classList.remove('boss');
+            document.getElementById('enemy-name').innerText = enemy.getName();
+        }
+
+        document.getElementById('enemy-level').innerText = `LV ${enemy.getLevel()}`;
+        document.getElementById('enemy-weak').innerText = enemy.forcedWeakTurns > 0 ? `${enemy.weakness} + ${enemy.forcedWeakElement}(Vulnerable)` : enemy.weakness;
+        document.getElementById('enemy-weak').className = getElementColorClass(enemy.weakness);
+        document.getElementById('enemy-resist').innerText = enemy.resist;
+        renderStatus(enemy, 'enemy-status');
+        
+        document.getElementById('enemy-hp-text').innerText = `${enemy.getHp()}/${enemy.getMaxHp()}`;
+        document.getElementById('enemy-hp-bar').style.width = `${Math.max(0, (enemy.getHp() / enemy.getMaxHp()) * 100)}%`;
+
+        updateSkillSelectUI();
+        updateInventoryUI();
+    }
+
+    function addLog(text, type) {
+        const p = document.createElement('p');
+        p.className = `log-entry log-${type}`;
+        p.innerHTML = text;
+        logBox.appendChild(p);
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function disableButtons() {
+        btnAttack.disabled = true;
+        btnSkill.disabled = true;
+        btnSwitch.disabled = true;
+        btnItem.disabled = true;
+        itemSelect.disabled = true;
+        skillSelect.disabled = true;
+    }
+
+    function enableButtons() {
+        btnAttack.disabled = false;
+        btnSwitch.disabled = false;
+        skillSelect.disabled = false;
+        const inner = player.getActiveInnerSelf();
+        const skill = inner.getActiveSkill();
+        btnSkill.disabled = player.getSp() < skill.spCost;
+        updateInventoryUI();
+    }
+
+    function handleVictory() {
+        addLog(`* YOU WIN! You defeated ${enemy.getName()}.`, "system");
+        const expResult = player.gainExp(enemy.expReward);
+        const inner = player.getActiveInnerSelf();
+        const innerLevelResult = inner.gainExp(enemy.expReward);
+
+        addLog(`* Gained +${expResult.expGained} EXP.`, "system");
+
+        if (expResult.leveledUp) {
+            addLog(`* LOVE! ${player.getName()} reached LV ${player.getLevel()}!`, "levelup");
+        }
+        if (innerLevelResult.leveledUp) {
+            addLog(`* INNERSELF STRENGTHENED! ${inner.name} reached Lv. ${inner.level}!`, "levelup");
+        }
+        if (innerLevelResult.newSkillLearned) {
+            addLog(`* SKILL LEARNED! ${inner.name} unlocked new skill [${innerLevelResult.newSkillLearned}]!`, "levelup");
+        }
+
+        if (Math.random() < 0.3) {
+            const drop = itemPool[Math.floor(Math.random() * itemPool.length)];
+            player.inventory[drop.id] = (player.inventory[drop.id] || 0) + 1;
+            addLog(`* You found item [${drop.name}]!`, "levelup");
+        }
+
+        if (Math.random() < 0.3) {
+            if (player.innerselftypes.length < 8) {
+                const template = capturePool[Math.floor(Math.random() * capturePool.length)];
+                const newInner = new InnerSelf(template.name, template.skills);
+                player.innerselftypes.push(newInner);
+                addLog(`* Obtained InnerSelf ${newInner.name}!`, "levelup");
+            }
+        }
+
+        updateUI();
+        btnNext.style.display = 'block';
+    }
+
+    function executePlayerAction(actionFn) {
+        if (!player.isAlive() || !enemy.isAlive()) return;
+        disableButtons();
+        
+        const playerResult = actionFn(); 
+        if(playerResult) {
+            if (playerResult.isWeak) addLog(playerResult.text, "weakness");
+            else addLog(playerResult.text, playerResult.type);
+        }
+        
+        updateUI();
+
+        if (!enemy.isAlive()) {
+            handleVictory();
+            return;
+        }
+
+        setTimeout(() => {
+            const enemyResult = enemy.performAccess ? null : enemy.performAction(player);
+            addLog(enemyResult.text, enemyResult.type);
+            
+            const pLogs = player.tickModifiers();
+            const eLogs = enemy.tickModifiers();
+            pLogs.forEach(l => addLog(l, "system"));
+            eLogs.forEach(l => addLog(l, "system"));
+
+            updateUI();
+
+            if (!player.isAlive()) {
+                addLog("* YOU DIED. Determination failed.", "system");
+                btnReset.style.display = 'block';
+            } else {
+                enableButtons();
+            }
+        }, 600);
+    }
+
+    btnAttack.addEventListener('click', () => executePlayerAction(() => player.performAction(enemy, 'attack')));
+    btnSkill.addEventListener('click', () => executePlayerAction(() => player.performAction(enemy, 'skill')));
+    
+    btnSwitch.addEventListener('click', () => {
+        const newInner = player.switchInnerSelf();
+        addLog(`* Switched InnerSelf to ${newInner.name}!`, "system");
+        updateUI();
+    });
+
+    btnItem.addEventListener('click', () => {
+        const itemId = itemSelect.value;
+        if(!itemId) return;
+        
+        executePlayerAction(() => {
+            const item = itemPool.find(i => i.id === itemId);
+            player.inventory[itemId]--;
+            if(player.inventory[itemId] <= 0) delete player.inventory[itemId];
+
+            let text = "";
+            if (item.type === 'heal_hp') {
+                player.setHp(player.getHp() + item.value);
+                text = `* You ate ${item.name}. Recovered ${item.value} HP.`;
+            } else if (item.type === 'heal_sp') {
+                player.setSp(player.getSp() + item.value);
+                text = `* You drank ${item.name}. Recovered ${item.value} SP.`;
+            } else if (item.type === 'buff_atk') {
+                player.applyBuff('atk', item.value, item.turns);
+                text = `* You used ${item.name}. Attack increased!`;
+            } else if (item.type === 'buff_def') {
+                player.applyBuff('def', item.value, item.turns);
+                text = `* You used ${item.name}. Defense increased!`;
+            } else if (item.type === 'debuff_def') {
+                enemy.applyBuff('def', item.value, item.turns);
+                text = `* Enemy defense decreased!`;
+            } else if (item.type === 'debuff_tarunda') {
+                enemy.applyBuff('atk', item.value, item.turns);
+                text = `* Enemy attack decreased!`;
+            }
+            return { text: text, type: 'player', isWeak: false };
+        });
+    });
+
+    btnNext.addEventListener('click', () => {
+        player.resetModifiers();
+        const isBossSpawn = Math.random() < 0.2; 
+        enemy = ShadowFactory.spawn(player.getLevel(), isBossSpawn);
+        btnNext.style.display = 'none';
+        
+        initEncounterAnimation(isBossSpawn);
+        updateUI();
+    });
+
+    function resetGame() {
+        player = new Player(playerName, 150, 50, [
+            new InnerSelf("Arsene", [{ name: "Eiha", spCost: 10, power: 30, element: "Curse", effectType: 'damage' }]),
+            new InnerSelf("Captain Kidd", [{ name: "Dia", spCost: 12, power: 40, element: "None", effectType: 'heal' }]),
+            new InnerSelf("Carmen", [{ name: "Tarukaja", spCost: 8, power: 0, element: "None", effectType: 'buff_atk', effectValue: 1.5, effectTurns: 3 }]),
+            new InnerSelf("Goemon", [{ name: "Rakunda", spCost: 8, power: 0, element: "None", effectType: 'debuff_def', effectValue: 1.5, effectTurns: 3 }]),
+            new InnerSelf("Necronomicon", [{ name: "Scan Weakness", spCost: 12, power: 0, element: "Ice", effectType: 'element_vulnerability', effectTurns: 3 }])
+        ]);
+        enemy = ShadowFactory.spawn(player.getLevel());
+        logBox.innerHTML = '';
+        btnNext.style.display = 'none';
+        btnReset.style.display = 'none';
+        addLog("* Battle Engine Initialized.", "system");
+        initEncounterAnimation(enemy.isBoss);
+        updateUI();
+    }
+
+    btnReset.addEventListener('click', resetGame);
+
+    addLog("* Battle Engine Initialized.", "system");
+</script>
+
+</body>
+</html>
