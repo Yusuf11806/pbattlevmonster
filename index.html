@@ -22,7 +22,7 @@
             padding: 10px;
         }
 
-        /* Main Menu Styles */
+        
         #main-menu {
             position: absolute;
             top: 0;
@@ -55,7 +55,17 @@
             width: 250px;
         }
 
-        /* Game Container Styles - Undertale Box */
+        .name-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: #111111;
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            font-size: 14px;
+        }
+        .name-input:focus { outline: 2px solid #ffff00; outline-offset: 2px; }
+
+        
         .game-container {
             width: 95vw;
             max-width: 1200px;
@@ -69,7 +79,7 @@
             gap: 12px;
         }
 
-        /* Header */
+        
         .header {
             display: flex;
             justify-content: space-between;
@@ -103,11 +113,11 @@
         .btn-campfire { background: #ff8800 !important; color: #000 !important; }
         .btn-campfire:hover { background: #ffa500 !important; }
 
-        /* Pixel Animation Stage */
+        
         .pixel-stage {
             width: 100%;
-            height: 60px;
-            background: #000000;
+            height: 96px;
+            background: linear-gradient(#10131f 0 68%, #25202d 68% 100%);
             border: 2px solid #ffffff;
             position: relative;
             overflow: hidden;
@@ -115,28 +125,103 @@
             align-items: center;
         }
 
+        .pixel-ground {
+            position: absolute;
+            inset: auto 0 0;
+            height: 17px;
+            background: repeating-linear-gradient(90deg, #382a35 0 12px, #49313a 12px 24px);
+            border-top: 4px solid #80606a;
+            image-rendering: pixelated;
+        }
+        .pixel-city {
+            position: absolute;
+            bottom: 17px;
+            width: 100%;
+            height: 52px;
+            opacity: .8;
+            background:
+                linear-gradient(#292438 0 0) 5% 18px / 32px 34px no-repeat,
+                linear-gradient(#393047 0 0) 12% 4px / 45px 48px no-repeat,
+                linear-gradient(#292438 0 0) 22% 25px / 58px 27px no-repeat,
+                linear-gradient(#393047 0 0) 38% 12px / 38px 40px no-repeat,
+                linear-gradient(#292438 0 0) 51% 2px / 55px 50px no-repeat,
+                linear-gradient(#393047 0 0) 68% 22px / 46px 30px no-repeat,
+                linear-gradient(#292438 0 0) 81% 9px / 65px 43px no-repeat,
+                linear-gradient(#393047 0 0) 96% 20px / 35px 32px no-repeat;
+            image-rendering: pixelated;
+        }
+        .pixel-city::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(90deg, transparent 0 15px, #edbd55 15px 19px, transparent 19px 29px);
+            mask-image: repeating-linear-gradient(0deg, #000 0 4px, transparent 4px 11px);
+            opacity: .55;
+        }
+
         .pixel-runner {
             position: absolute;
             left: 10px;
-            bottom: 6px;
-            height: 44px;
-            width: 44px;
+            bottom: 10px;
+            height: 64px;
+            width: 64px;
             image-rendering: pixelated;
             transition: left 1.2s linear;
             z-index: 2;
+            animation: pixel-walk .42s steps(2, end) infinite;
+            shape-rendering: crispEdges;
+        }
+        .pixel-runner.pixel-traversing {
+            animation: pixel-walk .42s steps(2, end) infinite, pixel-traverse 2s steps(20, end) 1 normal forwards;
         }
 
         .pixel-enemy-stage {
             position: absolute;
             right: 20px;
-            bottom: 6px;
-            height: 44px;
-            width: 44px;
+            bottom: 10px;
+            height: 58px;
+            width: 48px;
             image-rendering: pixelated;
             z-index: 2;
+            animation: pixel-bob 0.9s steps(2, end) infinite reverse;
+            shape-rendering: crispEdges;
         }
 
-        /* Arena Display */
+        .stage-spark {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #ffff00;
+            box-shadow: 4px 0 #ffff00, -4px 0 #ffff00, 0 4px #ffff00, 0 -4px #ffff00;
+            opacity: 0;
+            animation: pixel-twinkle 1.8s steps(3, end) infinite;
+        }
+        .stage-spark-one { left: 30%; top: 15px; }
+        .stage-spark-two { left: 56%; top: 34px; animation-delay: .6s; background: #ff0055; box-shadow: 4px 0 #ff0055, -4px 0 #ff0055, 0 4px #ff0055, 0 -4px #ff0055; }
+        .stage-spark-three { left: 78%; top: 12px; animation-delay: 1.2s; }
+        @keyframes pixel-bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+        @keyframes pixel-walk {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(3px, -2px); }
+            50% { transform: translate(0, -5px); }
+            75% { transform: translate(-3px, -2px); }
+        }
+        @keyframes pixel-traverse {
+            from { left: 10px; }
+            to { left: calc(100% - 148px); }
+        }
+        @keyframes pixel-twinkle {
+            0%, 100% { opacity: 0; transform: scale(.6); }
+            45%, 60% { opacity: .9; transform: scale(1); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .pixel-runner, .pixel-enemy-stage, .stage-spark { animation: none; }
+        }
+
+        
         .arena {
             display: flex;
             justify-content: space-between;
@@ -207,7 +292,7 @@
         .sp-fill { background: #00ffff; }
         .exp-fill { background: #ffff00; }
 
-        /* Battle Log */
+        
         .log-box {
             height: 18vh; 
             min-height: 100px;
@@ -228,7 +313,7 @@
         .log-levelup { color: #00ff00; font-weight: bold; }
         .log-weakness { color: #ffff00; font-weight: bold; font-size: 14px; }
 
-        /* Controls */
+        
         .controls {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -275,10 +360,11 @@
 
 <audio id="bgm" src="life_will_change_instrumental.mp3" loop></audio>
 
-<!-- Main Menu -->
+
 <div id="main-menu">
     <h1>PBattle V Monster</h1>
     <div class="menu-controls">
+        <input id="player-name-input" class="name-input" type="text" maxlength="24" placeholder="Enter your name" aria-label="Your name" autocomplete="nickname">
         <button id="btn-start-game" class="btn">START GAME</button>
         <button id="btn-load-game" class="btn btn-secondary" style="display:none;">LOAD GAME</button>
         <button id="btn-menu-sound" class="btn btn-secondary">SOUND: OFF</button>
@@ -286,7 +372,7 @@
     </div>
 </div>
 
-<!-- Game UI -->
+
 <div class="game-container" id="game-ui" style="display: none;">
     <div class="header">
         <div class="header-titles">
@@ -300,18 +386,40 @@
         </div>
     </div>
 
-    <!-- Undertale Pixel Encounter Stage -->
+    
     <div class="pixel-stage">
-        <img src="image_03aa43.png" alt="Character" id="pixel-runner" class="pixel-runner" onerror="this.style.display='none'; document.getElementById('fallback-runner').style.display='block';">
-        <span id="fallback-runner" style="display:none; position:absolute; left:10px; bottom:12px; font-size:18px;">❤️</span>
-
-        <img src="image_03aadd.png" alt="Enemy" id="pixel-enemy" class="pixel-enemy-stage" onerror="this.style.display='none'; document.getElementById('fallback-enemy').style.display='block';">
-        <span id="fallback-enemy" style="display:none; position:absolute; right:20px; bottom:12px; font-size:18px;">👾</span>
+        <span class="pixel-city" aria-hidden="true"></span>
+        <span class="pixel-ground" aria-hidden="true"></span>
+        <svg id="pixel-runner" class="pixel-runner" viewBox="0 0 64 64" role="img" aria-label="Spiky-haired pixel hero with a key-shaped sword" xmlns="http://www.w3.org/2000/svg">
+            <g shape-rendering="crispEdges">
+                <rect x="8" y="59" width="49" height="4" fill="#09090d"/>
+                <rect x="20" y="50" width="10" height="10" fill="#161923"/><rect x="36" y="50" width="10" height="10" fill="#161923"/>
+                <rect x="17" y="31" width="31" height="23" fill="#202a3c"/><rect x="13" y="34" width="9" height="15" fill="#202a3c"/><rect x="42" y="34" width="8" height="13" fill="#202a3c"/>
+                <rect x="20" y="35" width="6" height="18" fill="#d43b43"/><rect x="39" y="35" width="5" height="17" fill="#d43b43"/><rect x="27" y="40" width="11" height="5" fill="#e7d8b7"/>
+                <rect x="20" y="23" width="25" height="13" fill="#f0c39a"/><rect x="24" y="28" width="4" height="3" fill="#263047"/><rect x="36" y="28" width="4" height="3" fill="#263047"/>
+                <rect x="22" y="18" width="23" height="7" fill="#70432b"/><rect x="17" y="13" width="10" height="12" fill="#70432b"/><rect x="23" y="8" width="8" height="12" fill="#9a6234"/><rect x="30" y="12" width="8" height="9" fill="#70432b"/><rect x="38" y="7" width="8" height="15" fill="#9a6234"/><rect x="44" y="13" width="8" height="10" fill="#70432b"/><rect x="48" y="18" width="6" height="8" fill="#9a6234"/>
+                <rect x="42" y="36" width="17" height="4" fill="#d9b94f"/><rect x="54" y="29" width="5" height="7" fill="#f2d66f"/><rect x="58" y="32" width="5" height="4" fill="#d9b94f"/><rect x="53" y="40" width="7" height="4" fill="#d9b94f"/><rect x="45" y="40" width="4" height="8" fill="#d9b94f"/><rect x="41" y="45" width="8" height="4" fill="#f2d66f"/>
+                <rect x="18" y="51" width="12" height="5" fill="#d9b94f"/><rect x="36" y="51" width="12" height="5" fill="#d9b94f"/>
+            </g>
+        </svg>
+        <svg id="pixel-enemy" class="pixel-enemy-stage" viewBox="0 0 48 64" role="img" aria-label="Pixel shadow enemy" xmlns="http://www.w3.org/2000/svg">
+            <g shape-rendering="crispEdges">
+                <rect x="8" y="58" width="34" height="4" fill="#080810"/>
+                <rect x="13" y="24" width="25" height="31" fill="#171520"/><rect x="8" y="32" width="9" height="17" fill="#242032"/><rect x="35" y="31" width="9" height="18" fill="#242032"/>
+                <rect x="14" y="17" width="24" height="15" fill="#28223b"/><rect x="9" y="12" width="10" height="17" fill="#171520"/><rect x="33" y="11" width="10" height="18" fill="#171520"/><rect x="17" y="8" width="5" height="12" fill="#302744"/><rect x="30" y="7" width="5" height="12" fill="#302744"/>
+                <rect x="17" y="22" width="7" height="4" fill="#ffe66d"/><rect x="29" y="22" width="7" height="4" fill="#ffe66d"/><rect x="19" y="23" width="3" height="2" fill="#f5a83b"/><rect x="31" y="23" width="3" height="2" fill="#f5a83b"/>
+                <rect x="18" y="37" width="6" height="12" fill="#3e315a"/><rect x="29" y="37" width="6" height="12" fill="#3e315a"/><rect x="13" y="51" width="10" height="8" fill="#171520"/><rect x="29" y="51" width="10" height="8" fill="#171520"/>
+                <rect x="4" y="40" width="8" height="4" fill="#59427b"/><rect x="39" y="40" width="8" height="4" fill="#59427b"/><rect x="22" y="30" width="7" height="4" fill="#59427b"/>
+            </g>
+        </svg>
+        <span class="stage-spark stage-spark-one" aria-hidden="true"></span>
+        <span class="stage-spark stage-spark-two" aria-hidden="true"></span>
+        <span class="stage-spark stage-spark-three" aria-hidden="true"></span>
     </div>
 
-    <!-- Arena Display -->
+    
     <div class="arena">
-        <!-- Player Card -->
+        
         <div class="card">
             <div class="card-header">
                 <h2 id="player-name">Yusuf Rayyan Daniel</h2>
@@ -336,7 +444,7 @@
             </div>
         </div>
 
-        <!-- Enemy Card -->
+        
         <div class="card enemy" id="enemy-card">
             <div class="card-header">
                 <h2 id="enemy-name">Shadow</h2>
@@ -354,10 +462,10 @@
         </div>
     </div>
 
-    <!-- Terminal Log / Dialogue Box -->
+    
     <div class="log-box" id="game-log"></div>
 
-    <!-- Actions -->
+    
     <div class="controls">
         <button id="btn-attack" class="btn">FIGHT</button>
         <select id="skill-select" class="skill-select"></select>
@@ -373,11 +481,12 @@
 </div>
 
 <script>
-    // --- Homepage & Global BGM Logic ---
     const mainMenu = document.getElementById('main-menu');
     const gameUI = document.getElementById('game-ui');
     const bgm = document.getElementById('bgm');
-    let playerName = 'Guest';
+    let playerName = localStorage.getItem('pbattle_player_name') || 'Guest';
+    let roundNumber = 1;
+    document.getElementById('player-name-input').value = playerName === 'Guest' ? '' : playerName;
     let bgmPlaying = false;
     const menuSoundButton = document.getElementById('btn-menu-sound');
     const bgmButton = document.getElementById('btn-bgm');
@@ -388,7 +497,6 @@
             menuSoundButton.innerText = "SOUND: ON";
             bgmButton.innerText = "PAUSE BGM";
         }).catch(() => {
-            // Browsers may wait for the user's first interaction before playing audio.
             bgmPlaying = false;
             menuSoundButton.innerText = "SOUND: OFF";
             bgmButton.innerText = "PLAY BGM";
@@ -405,24 +513,25 @@
             playBgm();
         }
     }
-
-    // Try autoplay on page open; resume on the first user gesture if the browser blocks it.
     playBgm();
     document.addEventListener('pointerdown', (event) => {
-        // The sound buttons already toggle playback on click; don't start here
-        // as well or their click handler would immediately pause the music.
         if (!bgmPlaying && !event.target.closest('#btn-menu-sound, #btn-bgm')) playBgm();
     });
 
     const btnLoadGame = document.getElementById('btn-load-game');
-    if (localStorage.getItem('pbattle_save_data')) {
-        btnLoadGame.style.display = 'block';
+    function refreshLoadButton() {
+        try {
+            btnLoadGame.style.display = localStorage.getItem('pbattle_save_data') ? 'block' : 'none';
+        } catch (e) {
+            btnLoadGame.style.display = 'none';
+        }
     }
+    refreshLoadButton();
+    window.addEventListener('pageshow', refreshLoadButton);
 
     document.getElementById('btn-start-game').addEventListener('click', () => {
-        const enteredName = prompt('What should we call you?', playerName);
-        if (enteredName === null) return;
-        playerName = enteredName.trim() || 'Guest';
+        playerName = document.getElementById('player-name-input').value.trim() || 'Guest';
+        localStorage.setItem('pbattle_player_name', playerName);
         player._name = playerName;
         mainMenu.style.display = 'none';
         gameUI.style.display = 'flex';
@@ -436,6 +545,7 @@
             gameUI.style.display = 'flex';
             addLog("* Game loaded successfully from Campfire storage[cite: 2].", "system");
             updateUI();
+            initEncounterAnimation(enemy.isBoss);
         } else {
             alert("Failed to load save data.");
         }
@@ -444,9 +554,7 @@
     document.getElementById('btn-quit').addEventListener('click', () => {
         gameUI.style.display = 'none';
         mainMenu.style.display = 'flex';
-        if (localStorage.getItem('pbattle_save_data')) {
-            btnLoadGame.style.display = 'block';
-        }
+        refreshLoadButton();
     });
 
     document.getElementById('btn-menu-sound').addEventListener('click', toggleSound);
@@ -454,11 +562,10 @@
     document.getElementById('btn-exit').addEventListener('click', () => {
         mainMenu.innerHTML = '<h1 style="color:#ffff00;">GAME CLOSED.</h1><p>* Stay determined.</p>';
     });
-
-    // --- Campfire Save / Load System ---
     function saveGameData() {
         const saveData = {
             name: player.getName(),
+            roundNumber: roundNumber + 1,
             level: player.getLevel(),
             hp: player.getHp(),
             maxHp: player._maxHp,
@@ -480,7 +587,7 @@
         };
         localStorage.setItem('pbattle_save_data', JSON.stringify(saveData));
         addLog("* Grace discovered. Game Saved at Campfire[cite: 2]!", "levelup");
-        btnLoadGame.style.display = 'block';
+        refreshLoadButton();
     }
 
     function loadGameData() {
@@ -488,27 +595,32 @@
         if (!rawData) return false;
         try {
             const data = JSON.parse(rawData);
+            if (!data || !Array.isArray(data.innerselftypes) || data.innerselftypes.length === 0) {
+                throw new Error('Save data is missing its InnerSelves.');
+            }
             const loadedInnerSelves = data.innerselftypes.map(pData => {
-                const p = new InnerSelf(pData.name, pData.skills);
-                p.activeSkillIndex = pData.activeSkillIndex;
-                p.level = pData.level;
-                p.exp = pData.exp;
-                p.maxExp = pData.maxExp;
+                const fallback = player.innerselftypes.find(inner => inner.name === pData.name);
+                const p = new InnerSelf(pData.name || fallback?.name || 'Arsene', pData.skills || fallback?.skills || []);
+                p.activeSkillIndex = pData.activeSkillIndex ?? 0;
+                p.level = pData.level ?? 1;
+                p.exp = pData.exp ?? 0;
+                p.maxExp = pData.maxExp ?? 30;
                 return p;
             });
 
             playerName = data.name || 'Guest';
-            player = new Player(playerName, data.maxHp, data.maxSp, loadedInnerSelves);
-            player._level = data.level;
-            player._hp = data.hp;
-            player._sp = data.sp;
-            player._exp = data.exp;
-            player._maxExp = data.maxExp;
-            player._baseAtk = data.baseAtk;
-            player.inventory = data.inventory;
-            player.activePersonaIndex = data.activePersonaIndex;
+            roundNumber = data.roundNumber ?? 1;
+            player = new Player(playerName, data.maxHp ?? 150, data.maxSp ?? 50, loadedInnerSelves);
+            player._level = data.level ?? 1;
+            player._hp = data.hp ?? player.getMaxHp();
+            player._sp = data.sp ?? player.getMaxSp();
+            player._exp = data.exp ?? 0;
+            player._maxExp = data.maxExp ?? 50;
+            player._baseAtk = data.baseAtk ?? 12;
+            player.inventory = data.inventory || player.inventory;
+            player.activePersonaIndex = Math.min(data.activePersonaIndex ?? 0, loadedInnerSelves.length - 1);
 
-            enemy = ShadowFactory.spawn(player.getLevel());
+            enemy = ShadowFactory.spawn(player.getLevel(), roundNumber > 10 && Math.random() < 0.2);
             logBox.innerHTML = '';
             btnNext.style.display = 'none';
             btnReset.style.display = 'none';
@@ -516,33 +628,33 @@
             return true;
         } catch (e) {
             console.error(e);
+            alert(`Could not load save data: ${e.message}`);
             return false;
         }
     }
 
     document.getElementById('btn-campfire').addEventListener('click', () => {
         if (!player.isAlive()) return;
+        if (btnNext.style.display !== 'block') {
+            addLog("* The campfire is only available between encounters.", "system");
+            return;
+        }
         player.setHp(player.getMaxHp());
         player.setSp(player.getMaxSp());
         saveGameData();
         updateUI();
     });
-
-    // --- Animation Controller ---
     const pixelRunner = document.getElementById('pixel-runner');
-    const fallbackRunner = document.getElementById('fallback-runner');
-
     function initEncounterAnimation(isBoss = false) {
         disableButtons();
         
-        const activeRunner = pixelRunner.complete && pixelRunner.naturalHeight !== 0 ? pixelRunner : fallbackRunner;
-        activeRunner.style.transition = 'none';
+        const activeRunner = pixelRunner;
+        activeRunner.classList.remove('pixel-traversing');
         activeRunner.style.left = '10px';
 
         void activeRunner.offsetWidth;
 
-        activeRunner.style.transition = 'left 1.2s linear';
-        activeRunner.style.left = 'calc(100% - 70px)';
+        activeRunner.classList.add('pixel-traversing');
 
         setTimeout(() => {
             enableButtons();
@@ -554,8 +666,6 @@
             updateUI();
         }, 1200);
     }
-
-    // --- Game Logic ---
     function calculateRandomDamage(baseAtk) {
         const variance = 0.85 + (Math.random() * 0.30);
         return Math.max(1, Math.floor(baseAtk * variance));
@@ -628,7 +738,7 @@
     class InnerSelf {
         constructor(name, skills) {
             this.name = name;
-            this.skills = skills; // Array of skill objects: { name, spCost, power, element, effectType, effectValue, effectTurns, learnLevel }
+            this.skills = skills;
             this.activeSkillIndex = 0;
             this.level = 1;
             this.exp = 0;
@@ -649,8 +759,6 @@
                 this.exp -= this.maxExp;
                 this.maxExp = Math.floor(this.maxExp * 1.5);
                 leveledUp = true;
-
-                // Check if any skill unlocks at this level
                 const foundSkill = this.unlockableSkillPool.find(s => s.learnLevel === this.level && !this.skills.some(existing => existing.name === s.name));
                 if (foundSkill) {
                     this.skills.push(foundSkill);
@@ -660,8 +768,6 @@
             return { leveledUp, newSkillLearned };
         }
     }
-
-    // Attach level-up skill evolution pools to InnerSelf class
     InnerSelf.prototype.unlockableSkillPool = [
         { name: "Maragion", spCost: 18, power: 45, element: "Fire", effectType: 'damage', learnLevel: 2 },
         { name: "Mediarahan", spCost: 22, power: 150, element: "None", effectType: 'heal', learnLevel: 3 },
@@ -730,13 +836,12 @@
                         target.applyVulnerability(skill.element, skill.effectTurns);
                         text = `* ${inner.name} cast [${skill.name}]. Enemy made weak to [${skill.element}] for ${skill.effectTurns} rounds!`;
                     } else {
-                        // Standard elemental or physical attack skill
                         let rawDmg = (this.getBaseAtk() + skill.power) * this.modifiers.atkMult;
                         let multiplier = 1.0;
                         let isResist = false;
 
                         if (target.weakness === skill.element || target.isForcedWeak(skill.element)) { 
-                            multiplier = 2.0; 
+                            multiplier = 1.5; 
                             isWeak = true; 
                         }
                         else if (target.resist === skill.element) { 
@@ -757,9 +862,20 @@
             } 
             
             let rawMeleeDmg = Math.floor(this.getBaseAtk() * 0.6) * this.modifiers.atkMult;
-            let finalMeleeMult = 1.0 * target.modifiers.defMult;
+            let meleeElementMult = 1.0;
+            let meleeIsWeak = false;
+            if (target.weakness === "None" || target.isForcedWeak("None")) {
+                meleeElementMult = 1.5;
+                meleeIsWeak = true;
+            } else if (target.resist === "None") {
+                meleeElementMult = 0.4;
+            }
+            let finalMeleeMult = meleeElementMult * target.modifiers.defMult;
             const finalDmg = target.takeDamage(calculateRandomDamage(rawMeleeDmg * finalMeleeMult));
-            return { text: `* You attacked for ${finalDmg} damage.`, type: 'player', isWeak: false };
+            const meleeText = meleeIsWeak
+                ? `* CRITICAL! Weakness exploited! You attacked for ${finalDmg} damage.`
+                : `* You attacked for ${finalDmg} damage.`;
+            return { text: meleeText, type: 'player', isWeak: meleeIsWeak };
         }
     }
 
@@ -844,8 +960,6 @@
         { name: "Silky", skills: [{ name: "Bufu", spCost: 11, power: 32, element: "Ice", effectType: 'damage' }] },
         { name: "Ose", skills: [{ name: "Cleave", spCost: 12, power: 35, element: "None", effectType: 'damage' }] }
     ];
-
-    // Starting with 5 Unique Custom InnerSelves with initial skill sets
     let player = new Player("Yusuv Rayyan Daniel", 150, 50, [
         new InnerSelf("Arsene", [
             { name: "Eiha", spCost: 10, power: 30, element: "Curse", effectType: 'damage' }
@@ -1073,7 +1187,8 @@
             updateUI();
 
             if (!player.isAlive()) {
-                addLog("* YOU DIED. Determination failed.", "system");
+                addLog("* YOU DIED. Returning to your last campfire save...", "system");
+                btnReset.innerText = 'RESPAWN AT CAMPFIRE';
                 btnReset.style.display = 'block';
             } else {
                 enableButtons();
@@ -1125,7 +1240,8 @@
 
     btnNext.addEventListener('click', () => {
         player.resetModifiers();
-        const isBossSpawn = Math.random() < 0.2; 
+        roundNumber++;
+        const isBossSpawn = roundNumber > 10 && Math.random() < 0.2;
         enemy = ShadowFactory.spawn(player.getLevel(), isBossSpawn);
         btnNext.style.display = 'none';
         
@@ -1134,6 +1250,7 @@
     });
 
     function resetGame() {
+        roundNumber = 1;
         player = new Player(playerName, 150, 50, [
             new InnerSelf("Arsene", [{ name: "Eiha", spCost: 10, power: 30, element: "Curse", effectType: 'damage' }]),
             new InnerSelf("Captain Kidd", [{ name: "Dia", spCost: 12, power: 40, element: "None", effectType: 'heal' }]),
@@ -1145,12 +1262,39 @@
         logBox.innerHTML = '';
         btnNext.style.display = 'none';
         btnReset.style.display = 'none';
+        btnReset.innerText = 'RESTART GAME *';
         addLog("* Battle Engine Initialized.", "system");
         initEncounterAnimation(enemy.isBoss);
         updateUI();
     }
 
-    btnReset.addEventListener('click', resetGame);
+    btnReset.addEventListener('click', () => {
+        const progressAtDeath = {
+            level: player.getLevel(),
+            exp: player.getExp(),
+            maxExp: player.getMaxExp(),
+            maxHp: player.getMaxHp(),
+            maxSp: player.getMaxSp()
+        };
+        if (localStorage.getItem('pbattle_save_data') && loadGameData()) {
+            if (progressAtDeath.level > player.getLevel() || progressAtDeath.exp > player.getExp()) {
+                player._level = Math.max(progressAtDeath.level, player.getLevel());
+                player._exp = progressAtDeath.exp;
+                player._maxExp = progressAtDeath.maxExp;
+                player._maxHp = progressAtDeath.maxHp;
+                player._maxSp = progressAtDeath.maxSp;
+                player.setHp(player.getMaxHp());
+                player.setSp(player.getMaxSp());
+            }
+            btnReset.style.display = 'none';
+            btnReset.innerText = 'RESTART GAME *';
+            addLog(`* Respawned at the campfire. Round ${roundNumber} begins.`, 'levelup');
+            updateUI();
+            initEncounterAnimation(enemy.isBoss);
+        } else {
+            resetGame();
+        }
+    });
 
     addLog("* Battle Engine Initialized.", "system");
 </script>
