@@ -117,7 +117,7 @@
         .pixel-stage {
             width: 100%;
             height: 96px;
-            background: linear-gradient(#10131f 0 68%, #25202d 68% 100%);
+            background: linear-gradient(#101817 0 68%, #202923 68% 100%);
             border: 2px solid #ffffff;
             position: relative;
             overflow: hidden;
@@ -133,30 +133,14 @@
             border-top: 4px solid #80606a;
             image-rendering: pixelated;
         }
-        .pixel-city {
+        .pixel-forest {
             position: absolute;
             bottom: 17px;
+            left: 0;
             width: 100%;
-            height: 52px;
-            opacity: .8;
-            background:
-                linear-gradient(#292438 0 0) 5% 18px / 32px 34px no-repeat,
-                linear-gradient(#393047 0 0) 12% 4px / 45px 48px no-repeat,
-                linear-gradient(#292438 0 0) 22% 25px / 58px 27px no-repeat,
-                linear-gradient(#393047 0 0) 38% 12px / 38px 40px no-repeat,
-                linear-gradient(#292438 0 0) 51% 2px / 55px 50px no-repeat,
-                linear-gradient(#393047 0 0) 68% 22px / 46px 30px no-repeat,
-                linear-gradient(#292438 0 0) 81% 9px / 65px 43px no-repeat,
-                linear-gradient(#393047 0 0) 96% 20px / 35px 32px no-repeat;
+            height: 65px;
+            z-index: 0;
             image-rendering: pixelated;
-        }
-        .pixel-city::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: repeating-linear-gradient(90deg, transparent 0 15px, #edbd55 15px 19px, transparent 19px 29px);
-            mask-image: repeating-linear-gradient(0deg, #000 0 4px, transparent 4px 11px);
-            opacity: .55;
         }
 
         .pixel-runner {
@@ -186,6 +170,31 @@
             animation: pixel-bob 0.9s steps(2, end) infinite reverse;
             shape-rendering: crispEdges;
         }
+        .pixel-stage.resting .pixel-runner {
+            left: calc(50% - 32px) !important;
+            animation: none;
+            transform: translateY(8px) scaleY(.82);
+        }
+        .pixel-stage.resting .pixel-enemy-stage,
+        .pixel-stage.resting .stage-spark { display: none; }
+        .pixel-campfire {
+            display: none;
+            position: absolute;
+            left: calc(50% - 58px);
+            bottom: 9px;
+            width: 28px;
+            height: 34px;
+            z-index: 3;
+            image-rendering: pixelated;
+            shape-rendering: crispEdges;
+        }
+        .pixel-stage.resting .pixel-campfire { display: block; }
+        .pixel-fire-icon { width: 18px; height: 18px; vertical-align: middle; image-rendering: pixelated; shape-rendering: crispEdges; }
+        @keyframes fire-flicker {
+            0%, 100% { transform: translateY(0) scaleX(1); }
+            50% { transform: translateY(-2px) scaleX(.9); }
+        }
+        .pixel-campfire .flames { transform-origin: center bottom; animation: fire-flicker .35s steps(2, end) infinite; }
 
         .stage-spark {
             position: absolute;
@@ -218,7 +227,7 @@
             45%, 60% { opacity: .9; transform: scale(1); }
         }
         @media (prefers-reduced-motion: reduce) {
-            .pixel-runner, .pixel-enemy-stage, .stage-spark { animation: none; }
+            .pixel-runner, .pixel-enemy-stage, .stage-spark, .pixel-campfire .flames { animation: none; }
         }
 
         
@@ -348,6 +357,18 @@
         
         .btn-item { background: #000000; color: #ff8800; border: 2px solid #ff8800; padding: 10px; font-size: 12px; }
         .btn-item:hover:not(:disabled) { background: #ff8800; color: #000000; }
+        .btn-guard { color: #9ce3ff; border-color: #4aa9c9; }
+        .btn-guard:hover:not(:disabled) { background: #24627a; color: #ffffff; border-color: #9ce3ff; }
+        .skill-projectile {
+            display: none;
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #8df7ff;
+            box-shadow: 6px 0 #8df7ff, -6px 0 #8df7ff, 0 6px #ffffff, 0 -6px #ffffff;
+            z-index: 5;
+            image-rendering: pixelated;
+        }
 
         .btn-next, .btn-reset { grid-column: span 3; background: #000000; color: #00ff00; border: 2px solid #00ff00; padding: 10px; }
         .btn-next:hover, .btn-reset:hover { background: #00ff00; color: #000000; }
@@ -377,10 +398,9 @@
     <div class="header">
         <div class="header-titles">
             <h1>PBattle V Monster</h1>
-            <p>* Determination Engine • Skill Evolution System</p>
         </div>
         <div class="header-actions">
-            <button id="btn-campfire" class="btn-campfire">🔥 REST AT CAMPFIRE</button>
+            <button id="btn-campfire" class="btn-campfire"><svg class="pixel-fire-icon" viewBox="0 0 16 16" aria-hidden="true"><path fill="#ffe45c" d="M7 0h2v3h2v3h2v4h-2v3H5v-2H3V8h2V5h2z"/><path fill="#f04432" d="M7 3h2v3h2v4H9v3H6v-2H4V8h2V6h1z"/><path fill="#fff1a6" d="M7 8h2v3H7z"/></svg> REST AT CAMPFIRE</button>
             <button id="btn-bgm" class="btn-bgm">PLAY BGM</button>
             <button id="btn-quit" class="btn-quit">MENU</button>
         </div>
@@ -388,8 +408,21 @@
 
     
     <div class="pixel-stage">
-        <span class="pixel-city" aria-hidden="true"></span>
+        <svg class="pixel-forest" viewBox="0 0 800 80" preserveAspectRatio="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <g shape-rendering="crispEdges">
+                <rect x="635" y="7" width="14" height="14" fill="#d6d49a"/><rect x="649" y="7" width="8" height="8" fill="#d6d49a"/><rect x="635" y="21" width="8" height="7" fill="#d6d49a"/>
+                <rect x="87" y="9" width="3" height="3" fill="#e9e4b5"/><rect x="240" y="20" width="3" height="3" fill="#e9e4b5"/><rect x="714" y="28" width="3" height="3" fill="#e9e4b5"/><rect x="476" y="12" width="3" height="3" fill="#e9e4b5"/>
+                <rect x="0" y="55" width="800" height="25" fill="#1c3025"/>
+                <rect x="31" y="12" width="6" height="50" fill="#342c27"/><rect x="18" y="27" width="32" height="8" fill="#1e392a"/><rect x="23" y="18" width="22" height="9" fill="#244530"/><rect x="28" y="9" width="12" height="9" fill="#2d5237"/><rect x="13" y="35" width="42" height="8" fill="#1e392a"/>
+                <rect x="157" y="19" width="7" height="45" fill="#342c27"/><rect x="142" y="34" width="37" height="8" fill="#1a3427"/><rect x="148" y="25" width="27" height="9" fill="#22432d"/><rect x="153" y="16" width="17" height="9" fill="#2c5035"/><rect x="137" y="42" width="47" height="8" fill="#1a3427"/>
+                <rect x="348" y="7" width="8" height="59" fill="#342c27"/><rect x="328" y="25" width="48" height="9" fill="#193326"/><rect x="335" y="16" width="35" height="9" fill="#20422c"/><rect x="341" y="7" width="23" height="9" fill="#2b5034"/><rect x="321" y="34" width="62" height="9" fill="#193326"/>
+                <rect x="528" y="17" width="7" height="47" fill="#342c27"/><rect x="513" y="32" width="38" height="8" fill="#1a3427"/><rect x="519" y="23" width="26" height="9" fill="#23442e"/><rect x="524" y="14" width="17" height="9" fill="#2d5237"/><rect x="507" y="40" width="50" height="8" fill="#1a3427"/>
+                <rect x="740" y="9" width="8" height="57" fill="#342c27"/><rect x="720" y="27" width="48" height="9" fill="#193326"/><rect x="727" y="18" width="34" height="9" fill="#20422c"/><rect x="733" y="9" width="22" height="9" fill="#2b5034"/><rect x="713" y="36" width="62" height="9" fill="#193326"/>
+                <rect x="0" y="58" width="800" height="5" fill="#314b31"/><rect x="0" y="70" width="800" height="3" fill="#263d2b"/>
+            </g>
+        </svg>
         <span class="pixel-ground" aria-hidden="true"></span>
+        <span id="skill-projectile" class="skill-projectile" aria-hidden="true"></span>
         <svg id="pixel-runner" class="pixel-runner" viewBox="0 0 64 64" role="img" aria-label="Spiky-haired pixel hero with a key-shaped sword" xmlns="http://www.w3.org/2000/svg">
             <g shape-rendering="crispEdges">
                 <rect x="8" y="59" width="49" height="4" fill="#09090d"/>
@@ -410,6 +443,12 @@
                 <rect x="17" y="22" width="7" height="4" fill="#ffe66d"/><rect x="29" y="22" width="7" height="4" fill="#ffe66d"/><rect x="19" y="23" width="3" height="2" fill="#f5a83b"/><rect x="31" y="23" width="3" height="2" fill="#f5a83b"/>
                 <rect x="18" y="37" width="6" height="12" fill="#3e315a"/><rect x="29" y="37" width="6" height="12" fill="#3e315a"/><rect x="13" y="51" width="10" height="8" fill="#171520"/><rect x="29" y="51" width="10" height="8" fill="#171520"/>
                 <rect x="4" y="40" width="8" height="4" fill="#59427b"/><rect x="39" y="40" width="8" height="4" fill="#59427b"/><rect x="22" y="30" width="7" height="4" fill="#59427b"/>
+            </g>
+        </svg>
+        <svg class="pixel-campfire" viewBox="0 0 28 34" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <g shape-rendering="crispEdges">
+                <g class="flames"><rect x="12" y="2" width="5" height="6" fill="#ffe45c"/><rect x="8" y="8" width="13" height="12" fill="#f04432"/><rect x="11" y="12" width="8" height="9" fill="#ff9e36"/><rect x="13" y="15" width="4" height="6" fill="#fff1a6"/><rect x="7" y="11" width="4" height="5" fill="#ffcf4d"/><rect x="19" y="7" width="4" height="7" fill="#ffcf4d"/></g>
+                <rect x="4" y="24" width="20" height="4" fill="#69402f"/><rect x="7" y="21" width="4" height="7" fill="#9b6240"/><rect x="17" y="21" width="4" height="7" fill="#9b6240"/><rect x="9" y="29" width="10" height="2" fill="#463143"/>
             </g>
         </svg>
         <span class="stage-spark stage-spark-one" aria-hidden="true"></span>
@@ -474,6 +513,7 @@
         
         <select id="item-select" class="item-select"></select>
         <button id="btn-item" class="btn btn-item">ITEM</button>
+        <button id="btn-guard" class="btn btn-guard">GUARD</button>
 
         <button id="btn-next" class="btn btn-next" style="display:none;">NEXT ENCOUNTER *</button>
         <button id="btn-reset" class="btn btn-reset" style="display:none;">RESTART GAME *</button>
@@ -574,6 +614,7 @@
             exp: player.getExp(),
             maxExp: player.getMaxExp(),
             baseAtk: player._baseAtk,
+            evadeChance: player.evadeChance,
             inventory: player.inventory,
             innerselftypes: player.innerselftypes.map(p => ({
                 name: p.name,
@@ -581,7 +622,9 @@
                 activeSkillIndex: p.activeSkillIndex,
                 level: p.level,
                 exp: p.exp,
-                maxExp: p.maxExp
+                maxExp: p.maxExp,
+                skillPowerBonus: p.skillPowerBonus,
+                spCostReduction: p.spCostReduction
             })),
             activePersonaIndex: player.activePersonaIndex
         };
@@ -605,6 +648,8 @@
                 p.level = pData.level ?? 1;
                 p.exp = pData.exp ?? 0;
                 p.maxExp = pData.maxExp ?? 30;
+                p.skillPowerBonus = pData.skillPowerBonus ?? 0;
+                p.spCostReduction = pData.spCostReduction ?? 0;
                 return p;
             });
 
@@ -617,6 +662,7 @@
             player._exp = data.exp ?? 0;
             player._maxExp = data.maxExp ?? 50;
             player._baseAtk = data.baseAtk ?? 12;
+            player.evadeChance = data.evadeChance ?? 0.2;
             player.inventory = data.inventory || player.inventory;
             player.activePersonaIndex = Math.min(data.activePersonaIndex ?? 0, loadedInnerSelves.length - 1);
 
@@ -642,13 +688,55 @@
         player.setHp(player.getMaxHp());
         player.setSp(player.getMaxSp());
         saveGameData();
+        pixelRunner.classList.remove('pixel-traversing');
+        pixelRunner.style.left = 'calc(50% - 32px)';
+        document.querySelector('.pixel-stage').classList.add('resting');
         updateUI();
     });
     const pixelRunner = document.getElementById('pixel-runner');
+    const pixelEnemy = document.getElementById('pixel-enemy');
+    const skillProjectile = document.getElementById('skill-projectile');
+    const pixelStage = document.querySelector('.pixel-stage');
+    function animateTargetHit(target) {
+        if (!target.animate) return;
+        target.animate([
+            { filter: 'brightness(1)' },
+            { filter: 'brightness(3) saturate(.2)' },
+            { filter: 'brightness(1)' }
+        ], { duration: 300, easing: 'steps(3, end)' });
+    }
+    function animateAttack(attacker, target, distance) {
+        if (!attacker.animate || !target.animate) return;
+        attacker.animate([
+            { transform: 'translate(0, 0)' },
+            { transform: `translate(${distance}px, -4px)` },
+            { transform: 'translate(0, 0)' }
+        ], { duration: 380, easing: 'steps(6, end)' });
+        animateTargetHit(target);
+    }
+    function animateSkillAttack() {
+        const stageRect = pixelStage.getBoundingClientRect();
+        const heroRect = pixelRunner.getBoundingClientRect();
+        const enemyRect = pixelEnemy.getBoundingClientRect();
+        const startX = heroRect.right - stageRect.left - 8;
+        const startY = heroRect.top - stageRect.top + heroRect.height * .4;
+        const endX = enemyRect.left - stageRect.left + enemyRect.width * .35;
+        const endY = enemyRect.top - stageRect.top + enemyRect.height * .4;
+        skillProjectile.style.display = 'block';
+        skillProjectile.animate([
+            { left: `${startX}px`, top: `${startY}px`, transform: 'scale(.6)' },
+            { left: `${(startX + endX) / 2}px`, top: `${Math.min(startY, endY) - 12}px`, transform: 'scale(1.2)' },
+            { left: `${endX}px`, top: `${endY}px`, transform: 'scale(.8)' }
+        ], { duration: 420, easing: 'steps(8, end)' }).onfinish = () => {
+            skillProjectile.style.display = 'none';
+            animateTargetHit(pixelEnemy);
+        };
+    }
     function initEncounterAnimation(isBoss = false) {
         disableButtons();
         
         const activeRunner = pixelRunner;
+        document.querySelector('.pixel-stage').classList.remove('resting');
         activeRunner.classList.remove('pixel-traversing');
         activeRunner.style.left = '10px';
 
@@ -743,29 +831,43 @@
             this.level = 1;
             this.exp = 0;
             this.maxExp = 30;
+            this.skillPowerBonus = 0;
+            this.spCostReduction = 0;
         }
 
         getActiveSkill() {
             return this.skills[this.activeSkillIndex] || this.skills[0];
         }
 
+        getSkillCost(skill) {
+            return Math.max(1, skill.spCost - this.spCostReduction);
+        }
+
         gainExp(amount) {
             this.exp += amount;
             let leveledUp = false;
             let newSkillLearned = null;
+            const attributeGains = [];
 
             while (this.exp >= this.maxExp) {
                 this.level++;
                 this.exp -= this.maxExp;
                 this.maxExp = Math.floor(this.maxExp * 1.5);
                 leveledUp = true;
+                if (Math.random() < 0.5) {
+                    this.skillPowerBonus += 5;
+                    attributeGains.push(`${this.name}: skill power +5`);
+                } else {
+                    this.spCostReduction += 1;
+                    attributeGains.push(`${this.name}: skill cost -1 SP`);
+                }
                 const foundSkill = this.unlockableSkillPool.find(s => s.learnLevel === this.level && !this.skills.some(existing => existing.name === s.name));
                 if (foundSkill) {
                     this.skills.push(foundSkill);
                     newSkillLearned = foundSkill.name;
                 }
             }
-            return { leveledUp, newSkillLearned };
+            return { leveledUp, newSkillLearned, attributeGains };
         }
     }
     InnerSelf.prototype.unlockableSkillPool = [
@@ -784,6 +886,7 @@
             this._exp = 0;
             this._maxExp = 50;
             this.inventory = { 'medicine': 3, 'snuff_soul': 1, 'tarukaja': 1, 'rakunda': 1 };
+            this.evadeChance = 0.2;
         }
 
         getActiveInnerSelf() { return this.innerselftypes[this.activePersonaIndex]; }
@@ -798,6 +901,7 @@
         gainExp(amount) {
             this._exp += amount;
             let leveledUp = false;
+            const attributeGains = [];
             while (this._exp >= this._maxExp) {
                 this._level++;
                 this._exp -= this._maxExp;
@@ -807,8 +911,21 @@
                 this._hp = this._maxHp;
                 this._sp = this._maxSp;
                 leveledUp = true;
+                const attribute = Math.floor(Math.random() * 3);
+                if (attribute === 0) {
+                    this._maxHp += 12;
+                    this.setHp(this.getHp() + 12);
+                    attributeGains.push(`${this.getName()}: max HP +12`);
+                } else if (attribute === 1) {
+                    this._maxSp += 6;
+                    this.setSp(this.getSp() + 6);
+                    attributeGains.push(`${this.getName()}: max SP +6`);
+                } else {
+                    this._baseAtk += 2;
+                    attributeGains.push(`${this.getName()}: attack +2`);
+                }
             }
-            return { expGained: amount, leveledUp: leveledUp };
+            return { expGained: amount, leveledUp, attributeGains };
         }
 
         performAction(target, actionType) {
@@ -816,14 +933,15 @@
                 const inner = this.getActiveInnerSelf();
                 const skill = inner.getActiveSkill();
 
-                if (this.getSp() >= skill.spCost) {
-                    this.setSp(this.getSp() - skill.spCost);
+                const skillCost = inner.getSkillCost(skill);
+                if (this.getSp() >= skillCost) {
+                    this.setSp(this.getSp() - skillCost);
                     
                     let text = "";
                     let isWeak = false;
 
                     if (skill.effectType === 'heal') {
-                        let healAmt = skill.power + (inner.level * 10);
+                        let healAmt = skill.power + (inner.level * 10) + inner.skillPowerBonus;
                         this.setHp(this.getHp() + healAmt);
                         text = `* ${inner.name} cast [${skill.name}]. Restored ${healAmt} HP to Yusuf!`;
                     } else if (skill.effectType === 'buff_atk') {
@@ -836,7 +954,7 @@
                         target.applyVulnerability(skill.element, skill.effectTurns);
                         text = `* ${inner.name} cast [${skill.name}]. Enemy made weak to [${skill.element}] for ${skill.effectTurns} rounds!`;
                     } else {
-                        let rawDmg = (this.getBaseAtk() + skill.power) * this.modifiers.atkMult;
+                        let rawDmg = (this.getBaseAtk() + skill.power + inner.skillPowerBonus) * this.modifiers.atkMult;
                         let multiplier = 1.0;
                         let isResist = false;
 
@@ -912,6 +1030,9 @@
         }
 
         performAction(target) {
+            if (Math.random() < target.evadeChance) {
+                return { text: `* ${this.getName()} attacks, but you dodge it!`, type: 'player' };
+            }
             let enemyRaw = this.getBaseAtk() * this.modifiers.atkMult;
             let finalEnemyMult = 1.0 * target.modifiers.defMult;
             const finalDmg = target.takeDamage(calculateRandomDamage(enemyRaw * finalEnemyMult));
@@ -984,6 +1105,7 @@
     const btnSkill = document.getElementById('btn-skill');
     const btnSwitch = document.getElementById('btn-switch');
     const btnItem = document.getElementById('btn-item');
+    const btnGuard = document.getElementById('btn-guard');
     const itemSelect = document.getElementById('item-select');
     const skillSelect = document.getElementById('skill-select');
     const btnNext = document.getElementById('btn-next');
@@ -1015,7 +1137,7 @@
         inner.skills.forEach((skill, index) => {
             const opt = document.createElement('option');
             opt.value = index;
-            opt.innerText = `${skill.name} (-${skill.spCost} SP)`;
+            opt.innerText = `${skill.name} (-${inner.getSkillCost(skill)} SP)`;
             if (index === inner.activeSkillIndex) {
                 opt.selected = true;
             }
@@ -1062,7 +1184,7 @@
 
         document.getElementById('player-name').innerText = player.getName();
         document.getElementById('player-level').innerText = `LV ${player.getLevel()}`;
-        document.getElementById('persona-info').innerHTML = `InnerSelf: <strong>${inner.name}</strong> (Lv. ${inner.level}) <br>Active Skill: <strong>${skill.name}</strong> (<span class="${getElementColorClass(skill.element)}">${skill.element}</span>) | -${skill.spCost} SP`;
+        document.getElementById('persona-info').innerHTML = `InnerSelf: <strong>${inner.name}</strong> (Lv. ${inner.level}) <br>Active Skill: <strong>${skill.name}</strong> (<span class="${getElementColorClass(skill.element)}">${skill.element}</span>) | -${inner.getSkillCost(skill)} SP<br>Skill Power Bonus: +${inner.skillPowerBonus}<br>Passive: Evasion (${Math.round(player.evadeChance * 100)}%)`;
         renderStatus(player, 'player-status');
         
         document.getElementById('player-hp-text').innerText = `${player.getHp()}/${player.getMaxHp()}`;
@@ -1107,6 +1229,7 @@
         btnSkill.disabled = true;
         btnSwitch.disabled = true;
         btnItem.disabled = true;
+        btnGuard.disabled = true;
         itemSelect.disabled = true;
         skillSelect.disabled = true;
     }
@@ -1114,10 +1237,11 @@
     function enableButtons() {
         btnAttack.disabled = false;
         btnSwitch.disabled = false;
+        btnGuard.disabled = false;
         skillSelect.disabled = false;
         const inner = player.getActiveInnerSelf();
         const skill = inner.getActiveSkill();
-        btnSkill.disabled = player.getSp() < skill.spCost;
+        btnSkill.disabled = player.getSp() < inner.getSkillCost(skill);
         updateInventoryUI();
     }
 
@@ -1132,9 +1256,11 @@
         if (expResult.leveledUp) {
             addLog(`* LOVE! ${player.getName()} reached LV ${player.getLevel()}!`, "levelup");
         }
+        expResult.attributeGains.forEach(gain => addLog(`* RANDOM ATTRIBUTE: ${gain}!`, "levelup"));
         if (innerLevelResult.leveledUp) {
             addLog(`* INNERSELF STRENGTHENED! ${inner.name} reached Lv. ${inner.level}!`, "levelup");
         }
+        innerLevelResult.attributeGains.forEach(gain => addLog(`* RANDOM ATTRIBUTE: ${gain}!`, "levelup"));
         if (innerLevelResult.newSkillLearned) {
             addLog(`* SKILL LEARNED! ${inner.name} unlocked new skill [${innerLevelResult.newSkillLearned}]!`, "levelup");
         }
@@ -1176,6 +1302,7 @@
         }
 
         setTimeout(() => {
+            animateAttack(pixelEnemy, pixelRunner, -26);
             const enemyResult = enemy.performAccess ? null : enemy.performAction(player);
             addLog(enemyResult.text, enemyResult.type);
             
@@ -1196,8 +1323,18 @@
         }, 600);
     }
 
-    btnAttack.addEventListener('click', () => executePlayerAction(() => player.performAction(enemy, 'attack')));
-    btnSkill.addEventListener('click', () => executePlayerAction(() => player.performAction(enemy, 'skill')));
+    btnAttack.addEventListener('click', () => {
+        animateAttack(pixelRunner, pixelEnemy, 26);
+        executePlayerAction(() => player.performAction(enemy, 'attack'));
+    });
+    btnSkill.addEventListener('click', () => {
+        if (player.getActiveInnerSelf().getActiveSkill().effectType === 'damage') animateSkillAttack();
+        executePlayerAction(() => player.performAction(enemy, 'skill'));
+    });
+    btnGuard.addEventListener('click', () => executePlayerAction(() => {
+        player.applyBuff('def', 0.5, 1);
+        return { text: '* You guard. The next hit will deal half damage.', type: 'player', isWeak: false };
+    }));
     
     btnSwitch.addEventListener('click', () => {
         const newInner = player.switchInnerSelf();
@@ -1274,7 +1411,9 @@
             exp: player.getExp(),
             maxExp: player.getMaxExp(),
             maxHp: player.getMaxHp(),
-            maxSp: player.getMaxSp()
+            maxSp: player.getMaxSp(),
+            baseAtk: player._baseAtk,
+            evadeChance: player.evadeChance
         };
         if (localStorage.getItem('pbattle_save_data') && loadGameData()) {
             if (progressAtDeath.level > player.getLevel() || progressAtDeath.exp > player.getExp()) {
@@ -1283,6 +1422,8 @@
                 player._maxExp = progressAtDeath.maxExp;
                 player._maxHp = progressAtDeath.maxHp;
                 player._maxSp = progressAtDeath.maxSp;
+                player._baseAtk = progressAtDeath.baseAtk;
+                player.evadeChance = progressAtDeath.evadeChance;
                 player.setHp(player.getMaxHp());
                 player.setSp(player.getMaxSp());
             }
